@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "sam"
+version = "0.1.0"
+description = ""
+authors = ["chand1012 <chandler@chand1012.dev>"]
+license = "AGPL-v3"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+nextcord = "^2.6.0"
+openai = "^1.1.1"
+python-dotenv = "^1.0.0"
+loguru = "^0.7.2"
+tiktoken = "^0.5.1"
+
+
+[tool.poetry.group.dev.dependencies]
+autopep8 = "^2.0.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
