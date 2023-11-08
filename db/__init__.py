@@ -7,7 +7,7 @@ from db.models import *
 
 load_dotenv()
 
-DB_URI = os.getenv("DB_URI", "sqlite:///./sam.db")
+DB_URI = os.getenv("DATABASE_URL", "sqlite:///./sam.db")
 DB_ECHO = os.getenv("DB_ECHO") == "true"
 
 

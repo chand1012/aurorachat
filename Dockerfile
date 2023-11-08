@@ -17,4 +17,4 @@ RUN poetry install --no-root
 COPY . .
 
 # Run gunicorn
-CMD ["python", "bot.py"]
+CMD ["poetry", "run", "python", "bot.py"]
