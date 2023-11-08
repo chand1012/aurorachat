@@ -16,3 +16,21 @@ def truncate_string(string):
         return string
     else:
         return string[:50] + '...'
+
+
+def split_string_on_space(s: str, n: int) -> list[str]:
+    words = s.split(' ')
+    result = []
+    current_line = ''
+
+    for word in words:
+        if len(current_line) + len(word) + 1 > n:
+            result.append(current_line.strip())
+            current_line = ''
+
+        current_line += ' ' + word
+
+    if current_line.strip():
+        result.append(current_line.strip())
+
+    return result

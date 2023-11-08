@@ -8,7 +8,7 @@ class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     discord_id: str = Field(default=None, unique=True, nullable=False)
     payment_status: Optional[str] = Field(default=None)
-    requests: List["Request"] = Relationship(back_populates="user")
+    request: List["Request"] = Relationship(back_populates="user")
 
 
 class Request(SQLModel, table=True):
@@ -27,6 +27,7 @@ class Request(SQLModel, table=True):
     useruploads: List["UserUploads"] = Relationship(back_populates="request")
     generatedfiles: List["GeneratedFiles"] = Relationship(
         back_populates="request")
+    summary: Optional["Summary"] = Relationship(back_populates="request")
 
 
 class Thread(SQLModel, table=True):
@@ -35,6 +36,7 @@ class Thread(SQLModel, table=True):
     request: Optional[Request] = Relationship(back_populates="thread")
     openai_id: str = Field(default=None, nullable=False)
     discord_id: str = Field(default=None, nullable=False)
+    assistant_id: str = Field(default=None, nullable=False)  # assistant id
 
     @property
     def user(self):
@@ -52,6 +54,7 @@ class UserUploads(SQLModel, table=True):
         default=None, nullable=False)  # get from openai api
     req_id: int = Field(default=None, foreign_key="request.id")
     request: Optional[Request] = Relationship(back_populates="useruploads")
+    content_type: str = Field(default=None, nullable=False)
     openai_id: str = Field(default=None, nullable=False)
 
     @property
@@ -65,6 +68,25 @@ class GeneratedFiles(SQLModel, table=True):
     request: Optional[Request] = Relationship(back_populates="generatedfiles")
     file_type: str = Field(
         default=None, nullable=False)  # image, audio, etc
+
+    @property
+    def user(self):
+        return self.request.user
+
+    @property
+    def created_at(self):
+        return self.request.created_at
+
+
+class Summary(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    req_id: int = Field(default=None, foreign_key="request.id")
+    request: Optional[Request] = Relationship(back_populates="summary")
+    summary: str = Field(default=None, nullable=False)
+    transcript: str = Field(default=None)
+    url: str = Field(default=None)
+    # only applicable if the summary is a youtube video
+    yt_id: str = Field(default=None)
 
     @property
     def user(self):
