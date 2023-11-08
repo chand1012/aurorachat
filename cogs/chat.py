@@ -122,30 +122,31 @@ class ChatCog(commands.Cog):
             raise commands.CommandError("Error processing request")
         upload = None
         files = []
-        if attachment:
-            upload = await process_upload(self.engine, self.openai, attachment, user, request)
-            if not upload:
-                raise commands.CommandError("File too large.")
-            files.append(upload.openai_id)
-        thread = self.openai.beta.threads.create()
-        # create a new discord thread
-        thread_name = f"{truncate_string(prompt) if prompt else 'New Chat'}"
-        thread_channel = await ctx.channel.create_thread(name=thread_name, type=nextcord.ChannelType.public_thread)
         with Session(self.engine) as session:
-            thread_db = Thread(
-                request_id=request.id,
-                openai_id=thread.id,
-                discord_id=str(thread_channel.id),
-                assistant_id=assistant
-            )
-            session.add(thread_db)
-            session.commit()
-        await ctx.followup.send(f"Created thread {thread_channel.mention}")
-        if prompt is None:
-            await thread_channel.send("Hello! I am Sam, your helpful assistant. How can I help you today?")
-        else:
-            with thread_channel.typing():
-                await process_thread(self.openai, thread_channel, thread.id, assistant, prompt, files)
+            if attachment:
+                upload = await process_upload(session, self.openai, attachment, user, request)
+                if not upload:
+                    raise commands.CommandError("File too large.")
+                files.append(upload.openai_id)
+            thread = self.openai.beta.threads.create()
+            # create a new discord thread
+            thread_name = f"{truncate_string(prompt) if prompt else 'New Chat'}"
+            thread_channel = await ctx.channel.create_thread(name=thread_name, type=nextcord.ChannelType.public_thread)
+            with Session(self.engine) as session:
+                thread_db = Thread(
+                    request_id=request.id,
+                    openai_id=thread.id,
+                    discord_id=str(thread_channel.id),
+                    assistant_id=assistant
+                )
+                session.add(thread_db)
+                session.commit()
+            await ctx.followup.send(f"Created thread {thread_channel.mention}")
+            if prompt is None:
+                await thread_channel.send("Hello! I am Sam, your helpful assistant. How can I help you today?")
+            else:
+                with thread_channel.typing():
+                    await process_thread(self.openai, thread_channel, thread.id, assistant, prompt, files)
 
     @_chat.error
     async def _chat_error(self, ctx: nextcord.Interaction, error: commands.CommandError):
