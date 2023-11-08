@@ -1,6 +1,4 @@
 import os
-import io
-from datetime import datetime
 
 from nextcord.ext import commands
 import nextcord
@@ -9,8 +7,8 @@ from openai import OpenAI
 from sqlmodel import Session
 
 from db import new_engine
-from db.models import UserUploads
 from db.helpers import process_request
+from cogs.upload.process_upload import process_upload
 
 
 class UploadCog(commands.Cog):
@@ -20,46 +18,28 @@ class UploadCog(commands.Cog):
         self.engine = new_engine()
         log.info("Loaded UploadCog")
 
-    @nextcord.slash_command(name="upload", description="Upload an image to the bot")
+    @nextcord.slash_command(name="upload", description="Upload a file to the bot")
     async def _upload(self, ctx: nextcord.Interaction, attachment: nextcord.Attachment):
         log.info(
             f'Uploading file: {attachment.filename} ({attachment.size} bytes) ({attachment.content_type})')
         await ctx.response.defer(ephemeral=False)
-        # if its greater than 8mb, reject it
-        # TODO move this logic into a function so we can call it elsewhere
-        if attachment.size > 8000000:
-            await ctx.response.send_message("File is too big. Max size: 8mb")
-            return
         user, req, _ = process_request(
             self.engine, ctx, attachment.filename, 'upload', '')
         if not req:
             raise commands.CommandError("Error processing request")
-        content = await attachment.read()
-        buf = io.BytesIO(content)
-        buf.seek(0)
-        resp = self.openai.files.create(
-            file=buf,
-            purpose="assistants",
-        )
         with Session(self.engine) as session:
-            upload = UserUploads(
-                user_id=user.id,
-                req_id=req.id,
-                content_type=attachment.content_type,
-                openai_id=resp.id,
-                created_at=datetime.fromtimestamp(resp.created_at)
-            )
-            session.add(upload)
-            session.commit()
+            upload = await process_upload(session, self.openai, attachment, user, req)
+            if not upload:
+                raise commands.CommandError("File too large.")
         await ctx.followup.send(f"Successfully uploaded file.")
 
     @_upload.error
     async def _upload_error(self, ctx: nextcord.Interaction, error: commands.CommandError):
-        log.error(f"Error uploading image: {error}")
+        log.error(f"Error uploading file: {error}")
         try:
-            await ctx.followup.send(f"Error uploading image: {error}", ephemeral=True)
+            await ctx.followup.send(f"Error uploading file: {error}", ephemeral=True)
         except:
-            await ctx.send(f"Error uploading image: {error}", ephemeral=True)
+            await ctx.send(f"Error uploading file: {error}", ephemeral=True)
 
 
 def setup(bot):

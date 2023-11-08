@@ -11,13 +11,15 @@ from utils import split_messages, truncate_string
 from db import new_engine
 from db.models import Thread
 from db.helpers import process_request
+from cogs.upload import process_upload
 
 
-async def process_thread(o: OpenAI, channel: nextcord.PartialMessageable, thread_id: str, assistant_id: str, content: str):
+async def process_thread(o: OpenAI, channel: nextcord.PartialMessageable, thread_id: str, assistant_id: str, content: str, files: list[str] = []):
     o.beta.threads.messages.create(
         thread_id=thread_id,
         role="user",
-        content=content
+        content=content,
+        file_ids=files
     )
     run = o.beta.threads.runs.create(
         thread_id=thread_id,
@@ -37,8 +39,8 @@ async def process_thread(o: OpenAI, channel: nextcord.PartialMessageable, thread
     )
     # get the last message
     m = messages.data[0]
-    content = m.content[0]
-    response_text = content.text.value
+    c = m.content[0]
+    response_text = c.text.value
     if len(response_text) > 2000:
         # split until the message is less than 2000 characters
         responses = split_messages(response_text)
@@ -85,24 +87,46 @@ class ChatCog(commands.Cog):
                         return
                     thread_id = db_thread.openai_id
                     assistant_id = db_thread.assistant_id
+                    # check to see if there are any attachments
+                    files = []
+                    if len(message.attachments) > 5:
+                        raise commands.CommandError(
+                            "You can only upload up to 5 files.")
+                    if len(message.attachments) > 0:
+                        for attachment in message.attachments:
+                            upload = await process_upload(session, self.openai, attachment, message.author, message)
+                            if not upload:
+                                raise commands.CommandError("File too large.")
+                            files.append(upload.openai_id)
 
-                await process_thread(self.openai, message.channel, thread_id, assistant_id, prompt)
+                    await process_thread(self.openai, message.channel, thread_id, assistant_id, prompt, files)
 
     @nextcord.slash_command(name="chat", description="Chat with the bot")
-    async def _chat(self, ctx: nextcord.Interaction, prompt: str | None = nextcord.SlashOption(name="prompt", description="The initial message to send", required=False)):
+    async def _chat(self, ctx: nextcord.Interaction, prompt: str | None = nextcord.SlashOption(name="prompt", description="The initial message to send", required=False), attachment: nextcord.Attachment | None = None):
         # add this back when we have more assistants
         # quality: str | None = nextcord.SlashOption(name="quality", description="Quality of conversation", choices=['normal', 'better', 'best'], required=False, default='normal)
         await ctx.response.defer(ephemeral=False)
+        if attachment and not prompt:
+            await ctx.followup.send("You must provide a prompt if you are uploading a file.", ephemeral=True)
         # eventually there will be more assistants with differing quality
         assistant = os.getenv('ASSISTANT_ID')
         log.info(
             f"Creating new thread with assistant ({assistant}) for on {ctx.guild.name} ({ctx.guild.id}. Initial message: '{prompt}')")
         # process the request
-        _, request, allowed = process_request(
+        user, request, allowed = process_request(
             self.engine, ctx, prompt, 'text', 'normal')
         if not allowed:
             await ctx.followup.send("You have reached your request limit. Please try again in a few hours.")
             return
+        if not request:
+            raise commands.CommandError("Error processing request")
+        upload = None
+        files = []
+        if attachment:
+            upload = await process_upload(self.engine, self.openai, attachment, user, request)
+            if not upload:
+                raise commands.CommandError("File too large.")
+            files.append(upload.openai_id)
         thread = self.openai.beta.threads.create()
         # create a new discord thread
         thread_name = f"{truncate_string(prompt) if prompt else 'New Chat'}"
@@ -121,11 +145,32 @@ class ChatCog(commands.Cog):
             await thread_channel.send("Hello! I am Sam, your helpful assistant. How can I help you today?")
         else:
             with thread_channel.typing():
-                await process_thread(self.openai, thread_channel, thread.id, assistant, prompt)
+                await process_thread(self.openai, thread_channel, thread.id, assistant, prompt, files)
+
+    @_chat.error
+    async def _chat_error(self, ctx: nextcord.Interaction, error: commands.CommandError):
+        log.error(f"Error starting chat: {error}")
+        try:
+            await ctx.followup.send(f"Error starting chat: {error}", ephemeral=True)
+        except:
+            await ctx.send(f"Error starting chat: {error}", ephemeral=True)
 
     @nextcord.slash_command(name="delete", description="Delete the thread. Does nothing if the bot is not the owner or if not in a thread.")
     async def _delete(self, ctx: nextcord.Interaction):
         if ctx.channel.type == nextcord.ChannelType.public_thread or ctx.channel.type == nextcord.ChannelType.private_thread:
+            with Session(self.engine) as session:
+                statement = select(Thread).where(
+                    Thread.discord_id == str(ctx.channel.id))
+                db_thread = session.exec(statement).first()
+                if db_thread is None:
+                    raise commands.CommandError(
+                        f"Error getting thread with discord id {ctx.channel.id}")
+                thread_id = db_thread.openai_id
+                files = db_thread.request.useruploads
+                for file in files:
+                    self.openai.files.delete(file_id=file.openai_id)
+                self.openai.beta.threads.delete(thread_id=thread_id)
+
             if ctx.channel.owner != self.bot.user:
                 return
             await ctx.channel.delete()
@@ -137,14 +182,6 @@ class ChatCog(commands.Cog):
             await ctx.followup.send(f"Error deleting thread: {error}", ephemeral=True)
         except:
             await ctx.send(f"Error deleting thread: {error}", ephemeral=True)
-
-    @_chat.error
-    async def _chat_error(self, ctx: nextcord.Interaction, error: commands.CommandError):
-        log.error(f"Error starting chat: {error}")
-        try:
-            await ctx.followup.send(f"Error starting chat: {error}", ephemeral=True)
-        except:
-            await ctx.send(f"Error starting chat: {error}", ephemeral=True)
 
 
 def setup(bot):

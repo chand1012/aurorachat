@@ -1,0 +1,4 @@
+.env
+sam.db
+.venv
+**__pycache__/**

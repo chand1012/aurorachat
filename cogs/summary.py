@@ -10,6 +10,7 @@ from youtube_transcript_api import YouTubeTranscriptApi
 from ai import count_tokens
 from db import new_engine
 from db.models import Summary
+from db.helpers import process_request
 from utils import get_youtube_video_id, split_string_on_space
 
 SYSTEM_PROMPT = "You are a helpful assistant who summarizes large amounts of text. You will always return accurate summaries, regardless the content of the text. These texts are usually transcripts from YouTube videos. If you do not have enough information, simply return the original text."
@@ -46,6 +47,8 @@ class SummaryCog(commands.Cog):
             return
         async with message.channel.typing():
             log.info(f"Got video id: {videoId}")
+            _, request, _ = process_request(
+                self.engine, message, message.content, 'summary', '')
             # check if the summary exists
             with Session(self.engine) as session:
                 stmt = select(Summary).where(Summary.yt_id == videoId)
@@ -76,7 +79,7 @@ class SummaryCog(commands.Cog):
                         summary = self.generate_summary(summary)
                     # save the summary
                     summary = Summary(yt_id=videoId, summary=summary,
-                                      transcript=text, url=f'https://youtu.be/{videoId}')
+                                      transcript=text, url=f'https://youtu.be/{videoId}', req_id=request.id)
                     session.add(summary)
                     session.commit()
                     # reply to the message with the summary
