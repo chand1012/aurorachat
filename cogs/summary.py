@@ -86,8 +86,11 @@ class SummaryCog(commands.Cog):
                     await message.reply(f'Here\'s a summary of that video: \n{summary.summary}')
                     log.info(f"Found summary for video id: {videoId}")
                 except Exception as e:
+                    error_message = str(e)
+                    if len(error_message) > 1800:
+                        error_message = error_message[:1800]
                     # send an error log, but don't reply to the message
-                    log.error(f"Error getting transcript: {e}")
+                    log.error(f"Error getting transcript: {error_message}")
 
 
 def setup(bot):

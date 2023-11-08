@@ -20,14 +20,14 @@ class ImageCog(commands.Cog):
 
     @nextcord.slash_command(name="imagine", description="Have Sam draw for you!")
     async def _imagine(self, interaction: nextcord.Interaction,
-                       prompt: str, uncensored: str = nextcord.SlashOption(name="uncensored", description="Allow the image to be censored? Defaults to True. Requires 'best' quality and an NSFW channel.", required=False, choices=['false', 'true'], default='false'), quality: str | None = nextcord.SlashOption(name="quality", description="Image quality", required=False, choices=['normal', 'best'], default='normal')):
+                       quality: str | None = nextcord.SlashOption(name="quality", description="Image quality", required=False, choices=['normal', 'best', 'best - uncensored'], default='normal')):
         log.info(
-            f"Generating {quality} quality {'uncensored ' if uncensored == 'true' else ''} image with prompt: {prompt}")
+            f"Generating {quality} quality image with prompt: {prompt}")
         model = 'dall-e-2'
         if quality == 'best':
             model = 'dall-e-3'
-        if uncensored == 'true':
-            model = 'sdxl'
+        if 'uncensored' in quality:
+            model = "sdxl"
         await interaction.response.defer()
         if 'dall-e' in model:
             if len(prompt) > 1000 and model == 'dall-e-2':
@@ -51,7 +51,7 @@ class ImageCog(commands.Cog):
             log.info(
                 f"Generated image with full prompt: {image.revised_prompt or prompt}")
         else:
-            if not interaction.channel.is_nsfw() and uncensored == 'true':
+            if not interaction.channel.is_nsfw() and 'uncensored' in quality:
                 await interaction.followup.send("Cannot generate uncensored image in a non-NSFW channel.")
                 return
             image = await self.sdxl.generate_image(prompt=prompt, width=1024, height=1024, negative_prompt=' watermark, disfigured, bad art, deformed, poorly drawn, extra limbs, close up, b&w, weird colors, blurry, depth of field, missing fingers, ugly face, extra legs')
@@ -60,10 +60,13 @@ class ImageCog(commands.Cog):
     @_imagine.error
     async def _imagine_error(self, ctx: nextcord.Interaction, error: commands.CommandError):
         log.error(f"Error generating image: {error}")
+        error_message = str(error)
+        if len(error_message) > 1800:
+            error_message = error_message[:1800]
         try:
-            await ctx.followup.send(f"Error generating image: {error}", ephemeral=True)
+            await ctx.followup.send(f"Error generating image: {error_message}", ephemeral=True)
         except:
-            await ctx.send(f"Error generating image: {error}", ephemeral=True)
+            await ctx.send(f"Error generating image: {error_message}", ephemeral=True)
 
 
 def setup(bot):

@@ -14,6 +14,7 @@ from db.helpers import process_request
 from cogs.upload import process_upload
 
 
+# TODO - fix runs not being proper handled (they are not being deleted on error)
 async def process_thread(o: OpenAI, channel: nextcord.PartialMessageable, thread_id: str, assistant_id: str, content: str, files: list[str] = []):
     o.beta.threads.messages.create(
         thread_id=thread_id,
@@ -70,7 +71,7 @@ class ChatCog(commands.Cog):
                 f'Received message in thread on {message.guild.name} ({message.guild.id})')
             async with message.channel.typing():
                 prompt = message.content
-                _, _, allowed = process_request(
+                user, request, allowed = process_request(
                     self.engine, message, prompt, 'text', 'normal')
                 if not allowed:
                     await message.channel.send("You have reached your request limit now. Please try again in a few hours.")
@@ -94,7 +95,7 @@ class ChatCog(commands.Cog):
                             "You can only upload up to 5 files.")
                     if len(message.attachments) > 0:
                         for attachment in message.attachments:
-                            upload = await process_upload(session, self.openai, attachment, message.author, message)
+                            upload = await process_upload(session, self.openai, attachment, user, request)
                             if not upload:
                                 raise commands.CommandError("File too large.")
                             files.append(upload.openai_id)
@@ -179,10 +180,13 @@ class ChatCog(commands.Cog):
     @_delete.error
     async def _delete_error(self, ctx: nextcord.Interaction, error: commands.CommandError):
         log.error(f"Error deleting thread: {error}")
+        error_message = str(error)
+        if len(error_message) > 1800:
+            error_message = error_message[:1800]
         try:
-            await ctx.followup.send(f"Error deleting thread: {error}", ephemeral=True)
+            await ctx.followup.send(f"Error deleting thread: {error_message}", ephemeral=True)
         except:
-            await ctx.send(f"Error deleting thread: {error}", ephemeral=True)
+            await ctx.send(f"Error deleting thread: {error_message}", ephemeral=True)
 
 
 def setup(bot):
