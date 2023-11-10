@@ -9,6 +9,7 @@ from sqlmodel import Session
 from db import new_engine
 from db.helpers import process_request
 from cogs.upload.process_upload import process_upload
+from cogs.upload.process_audio import AUDIO_FILE_EXT, process_audio
 
 
 class UploadCog(commands.Cog):
@@ -28,7 +29,11 @@ class UploadCog(commands.Cog):
         if not req:
             raise commands.CommandError("Error processing request")
         with Session(self.engine) as session:
-            upload = await process_upload(session, self.openai, attachment, user, req)
+            upload = None
+            if attachment.filename.endswith(tuple(AUDIO_FILE_EXT)):
+                upload = await process_audio(session, self.openai, attachment, user, req)
+            else:
+                upload = await process_upload(session, self.openai, attachment, user, req)
             if not upload:
                 raise commands.CommandError("File too large.")
         await ctx.followup.send(f"Successfully uploaded file.")

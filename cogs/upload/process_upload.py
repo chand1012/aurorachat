@@ -7,6 +7,7 @@ from nextcord.ext import commands
 from openai import OpenAI
 
 from db.models import UserUploads, User, Request
+from utils.file_buffer import FileBuffer
 
 SUPPORTED_EXTENSIONS = ['c', 'cpp', 'csv', 'docx', 'html', 'java', 'json', 'md', 'pdf', 'php', 'pptx',
                         'py', 'rb', 'tex', 'txt', 'css', 'js', 'tar', 'ts', 'xlsx', 'xml', 'zip']
@@ -19,8 +20,8 @@ async def process_upload(session: Session, openai: OpenAI, attachment: nextcord.
     file_name = attachment.filename
     if not file_name.endswith(tuple(SUPPORTED_EXTENSIONS)):
         raise commands.CommandError(
-            f"Unsupported file type: {file_name.split('.')[-1]}. Supported types are: {SUPPORTED_EXTENSIONS}")
-    buf = io.BytesIO(content)
+            f"I cannot understand files with the extension '{file_name.split('.')[-1]}'. Here is a list of what I can understand: {', '.join(SUPPORTED_EXTENSIONS)}")
+    buf = FileBuffer(content, file_name)
     buf.seek(0)
     resp = openai.files.create(
         file=buf,

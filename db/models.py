@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Literal
 
 from sqlmodel import Field, SQLModel, Relationship, JSON, Column
 
@@ -37,6 +37,7 @@ class Thread(SQLModel, table=True):
     openai_id: str = Field(default=None, nullable=False)
     discord_id: str = Field(default=None, nullable=False)
     assistant_id: str = Field(default=None, nullable=False)  # assistant id
+    last_run_id: str = Field(default=None, nullable=False)
 
     @property
     def user(self):
