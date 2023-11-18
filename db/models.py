@@ -57,6 +57,7 @@ class UserUploads(SQLModel, table=True):
     request: Optional[Request] = Relationship(back_populates="useruploads")
     content_type: str = Field(default=None, nullable=False)
     openai_id: str = Field(default=None, nullable=False)
+    name: Optional[str] = Field(default=None)
 
     @property
     def user(self):

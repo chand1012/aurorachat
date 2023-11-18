@@ -9,6 +9,12 @@ def get_youtube_video_id(url: str) -> str:
         return match.group('id')
     else:
         return None
+    
+def get_youtube_video_ids(text: str) -> list:
+    pattern = r'(?:https?:\/\/)?(?:www\.)?(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtube\.com\/(?:user\/.*\/|playlist\?list=))?(?P<id>[A-Za-z0-9_-]{11})'
+    matches = re.findall(pattern, text)
+
+    return matches
 
 
 if __name__ == '__main__':

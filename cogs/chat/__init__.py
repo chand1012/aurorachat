@@ -71,7 +71,7 @@ class ChatCog(commands.Cog):
                                         "File too large.")
                                 files.append(upload.openai_id)
 
-                        await process_thread(session, self.openai, message.channel, db_thread, prompt, files)
+                        await process_thread(session, self.openai, message.channel, db_thread, request, files)
                 except Exception as e:
                     log.error(f"Error processing thread: {e}")
                     await message.channel.send(f"Sorry! I had a problem with your request. {e}")
@@ -122,7 +122,7 @@ class ChatCog(commands.Cog):
                 await thread_channel.send("Hello! I am Sam, your helpful assistant. How can I help you today?")
             else:
                 with thread_channel.typing():
-                    await process_thread(session, self.openai, thread_channel, db_thread, prompt, files)
+                    await process_thread(session, self.openai, thread_channel, db_thread, request, files)
 
     @_chat.error
     async def _chat_error(self, ctx: nextcord.Interaction, error: commands.CommandError):
@@ -230,7 +230,7 @@ class ChatCog(commands.Cog):
         try:
             await ctx.followup.send(f"Error deleting thread: {error_message}", ephemeral=True)
         except:
-            await ctx.send(f"Error deleting thread: {error_message}", ephemeral=True)
+            await ctx.channel.send(f"Error deleting thread: {error_message}", ephemeral=True)
 
 
 def setup(bot):

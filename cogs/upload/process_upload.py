@@ -32,7 +32,8 @@ async def process_upload(session: Session, openai: OpenAI, attachment: nextcord.
         req_id=request.id,
         content_type=attachment.content_type,
         openai_id=resp.id,
-        created_at=datetime.fromtimestamp(resp.created_at)
+        created_at=datetime.fromtimestamp(resp.created_at),
+        name=file_name
     )
     session.add(upload)
     session.commit()

@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 from sqlmodel import Session
 import nextcord
@@ -6,14 +7,13 @@ from nextcord.ext import commands
 from openai import OpenAI
 from loguru import logger as log
 
-from db.models import Thread
-from utils import split_messages
+from db.models import Thread, Request
+from utils import split_messages, get_youtube_video_id
+from cogs.summary.summary import process_summary
 
-# TODO - fix runs not being proper handled (they are not being deleted on error)
 
-
-async def process_thread(session: Session, o: OpenAI, channel: nextcord.PartialMessageable, db_thread: Thread, content: str, files: list[str] = []):
-    # if there are more than 10 files, forget the oldest (first ones)
+async def process_thread(session: Session, o: OpenAI, channel: nextcord.PartialMessageable, db_thread: Thread, request: Request, files: list[str] = []):
+    content = request.prompt
     if len(files) > 10:
         files = files[-10:]
     new_message = o.beta.threads.messages.create(
@@ -37,8 +37,27 @@ async def process_thread(session: Session, o: OpenAI, channel: nextcord.PartialM
             case "completed":
                 break
             case "requires_action":
-                raise NotImplementedError(
-                    "Requires action is not implemented yet."
+                # get all tool calls
+                actions = run.required_action.submit_tool_outputs.tool_calls
+                outputs = []
+                for action in actions:
+                    try:
+                        log.info(f'Processing action {action.function.name}')
+                        result = process_action(
+                            session, o, request, action.function.name, action.function.arguments)
+                        outputs.append({
+                            'tool_call_id': action.id,
+                            'output': result
+                        })
+                    except Exception as e:
+                        log.error(e)
+                        outputs.append({
+                            'tool_call_id': action.id,
+                            'output': 'error processing request'})
+                run = o.beta.threads.runs.submit_tool_outputs(
+                    thread_id=db_thread.openai_id,
+                    run_id=run.id,
+                    tool_outputs=outputs
                 )
             case "failed":
                 raise commands.CommandError(
@@ -84,3 +103,18 @@ async def process_thread(session: Session, o: OpenAI, channel: nextcord.PartialM
     message_responses.reverse()
     for response in message_responses:
         await channel.send(response)
+
+
+def process_action(session: Session, o: OpenAI, request: Request, name: str, argument: str) -> str:
+    arguments: dict = json.loads(argument)
+    match name:
+        case "get_youtube_summary":
+            video_id: str = arguments.get('id_or_url')
+            if video_id.startswith('http'):
+                video_id = get_youtube_video_id(video_id)
+            transcript, summary, _ = process_summary(
+                session, o, video_id, request)
+            return f'Summary: {summary}\nTranscript: {transcript}'
+        case _:
+            raise NotImplementedError(
+                f'Function "{name}" has not yet been implemented.')

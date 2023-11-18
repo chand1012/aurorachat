@@ -38,7 +38,8 @@ async def process_audio(session: Session, o: OpenAI, attachment: nextcord.Attach
         req_id=request.id,
         content_type=attachment.content_type,
         openai_id=resp.id,
-        created_at=datetime.fromtimestamp(resp.created_at)
+        created_at=datetime.fromtimestamp(resp.created_at),
+        name=new_filename
     )
     session.add(upload)
     session.commit()
