@@ -47,11 +47,11 @@ def process_summary(session: Session, o: OpenAI, video_id: str, request: Request
     stmt = select(Summary).where(Summary.yt_id == video_id)
     s = session.exec(stmt).first()
     if s:
-        return s.transcript, s.summary, True
+        return s, True
     transcript, summary = summarize(o, video_id)
     # save the summary
     s = Summary(yt_id=video_id, summary=summary,
                 transcript=transcript, url=f'https://youtu.be/{video_id}', req_id=request.id)
     session.add(s)
     session.commit()
-    return transcript, summary, False
+    return s, False

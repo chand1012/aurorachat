@@ -19,6 +19,7 @@ class Request(SQLModel, table=True):
     req_type: str = Field(default='text')  # text, image, etc
     quality: str = Field(default='normal')  # normal, better, best
     created_at: datetime = Field(default=datetime.now())
+    message_id: str = Field(default=None, nullable=False)
     guild_id: str = Field(default=None, nullable=False)
     channel_id: str = Field(default=None, nullable=False)
     # single thread per request at most

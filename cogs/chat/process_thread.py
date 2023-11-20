@@ -112,9 +112,9 @@ def process_action(session: Session, o: OpenAI, request: Request, name: str, arg
             video_id: str = arguments.get('id_or_url')
             if video_id.startswith('http'):
                 video_id = get_youtube_video_id(video_id)
-            transcript, summary, _ = process_summary(
+            summary, _ = process_summary(
                 session, o, video_id, request)
-            return f'Summary: {summary}\nTranscript: {transcript}'
+            return f'Summary: {summary.summary}\nTranscript: {summary.transcript}'
         case _:
             raise NotImplementedError(
                 f'Function "{name}" has not yet been implemented.')

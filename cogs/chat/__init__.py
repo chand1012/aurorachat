@@ -16,7 +16,7 @@ from cogs.chat.process_thread import process_thread
 
 
 class ChatCog(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.openai = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
         self.engine = new_engine()
@@ -189,14 +189,14 @@ class ChatCog(commands.Cog):
 
     @_close_thread.error
     async def _close_thread_error(self, ctx: nextcord.Interaction, error: commands.CommandError):
-        log.error(f"Error deleting thread: {error}")
+        log.error(f"Error closing thread: {error}")
         error_message = str(error)
         if len(error_message) > 1800:
             error_message = error_message[:1800]
         try:
-            await ctx.followup.send(f"Error deleting thread: {error_message}", ephemeral=True)
+            await ctx.followup.send(f"Error closing thread: {error_message}", ephemeral=True)
         except:
-            await ctx.send(f"Error deleting thread: {error_message}", ephemeral=True)
+            await ctx.send(f"Error closing thread: {error_message}", ephemeral=True)
 
     @nextcord.slash_command(name="delete", description="Delete the thread. Does nothing if the bot is not the owner or if not in a thread.")
     async def _delete(self, ctx: nextcord.Interaction):

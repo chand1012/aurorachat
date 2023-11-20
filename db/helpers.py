@@ -10,10 +10,13 @@ from db.models import Request, User
 def process_request(engine: Engine, interaction: nextcord.Interaction | nextcord.Message, prompt: str, req_type: str, quality: str):
     '''Takes in a request and processes it, returning true if the user can continue to the next step, false otherwise'''
     discord_user_id = None
+    message_id = None
     if isinstance(interaction, nextcord.Interaction):
         discord_user_id = str(interaction.user.id)
+        message_id = str(interaction.message.id)
     elif isinstance(interaction, nextcord.Message):
         discord_user_id = str(interaction.author.id)
+        message_id = str(interaction.id)
     else:
         raise TypeError(
             f"Expected interaction or message, got {type(interaction)}")
@@ -35,7 +38,8 @@ def process_request(engine: Engine, interaction: nextcord.Interaction | nextcord
             req_type=req_type,
             quality=quality,
             guild_id=str(interaction.guild.id),
-            channel_id=str(interaction.channel.id)
+            channel_id=str(interaction.channel.id),
+            message_id=message_id
         )
         session.add(req)
         session.commit()
