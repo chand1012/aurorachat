@@ -11,7 +11,7 @@ from utils import truncate_string, process_audio
 from db import new_engine
 from db.models import Thread
 from db.helpers import process_request
-from cogs.upload import process_upload, process_audio, AUDIO_FILE_EXT
+from utils.upload import process_upload, process_audio, AUDIO_FILE_EXT
 from cogs.chat.process_thread import process_thread
 
 
