@@ -37,7 +37,7 @@ class SummaryCog(commands.Cog):
             return
 
         _, request, _ = process_request(
-            self.engine, message, message.content, 'summary', '')
+            self.engine, message, message.content, 'summary', 'normal')
         async with message.channel.typing():
             with Session(self.engine) as session:
                 try:

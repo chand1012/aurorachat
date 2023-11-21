@@ -13,7 +13,7 @@ def process_request(engine: Engine, interaction: nextcord.Interaction | nextcord
     message_id = None
     if isinstance(interaction, nextcord.Interaction):
         discord_user_id = str(interaction.user.id)
-        message_id = str(interaction.message.id)
+        message_id = str(interaction.id)
     elif isinstance(interaction, nextcord.Message):
         discord_user_id = str(interaction.author.id)
         message_id = str(interaction.id)

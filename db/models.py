@@ -71,6 +71,7 @@ class GeneratedFiles(SQLModel, table=True):
     request: Optional[Request] = Relationship(back_populates="generatedfiles")
     file_type: str = Field(
         default=None, nullable=False)  # image, audio, etc
+    size: int = Field(default=0, nullable=False)  # in bytes
 
     @property
     def user(self):
