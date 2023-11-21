@@ -38,7 +38,7 @@ class Thread(SQLModel, table=True):
     openai_id: str = Field(default=None, nullable=False)
     discord_id: str = Field(default=None, nullable=False)
     assistant_id: str = Field(default=None, nullable=False)  # assistant id
-    last_run_id: str = Field(default=None, nullable=False)
+    last_run_id: str = Field(default=None, nullable=True)
 
     @property
     def user(self):
