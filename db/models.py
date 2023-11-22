@@ -91,6 +91,8 @@ class Summary(SQLModel, table=True):
     url: str = Field(default=None)
     # only applicable if the summary is a youtube video
     yt_id: str = Field(default=None)
+    summaryreplies: List["SummaryReplies"] = Relationship(
+        back_populates="summary")
 
     @property
     def user(self):
@@ -99,3 +101,11 @@ class Summary(SQLModel, table=True):
     @property
     def created_at(self):
         return self.request.created_at
+
+
+class SummaryReplies(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    summary_id: int = Field(default=None, foreign_key="summary.id")
+    summary: Optional[Summary] = Relationship(back_populates="summaryreplies")
+    original_message_id: str = Field(default=None, nullable=False)
+    reply_message_id: str = Field(default=None, nullable=False)

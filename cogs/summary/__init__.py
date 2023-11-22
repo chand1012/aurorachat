@@ -7,7 +7,7 @@ from loguru import logger as log
 from sqlmodel import Session, select
 
 from db import new_engine
-from db.models import Request
+from db.models import Request, SummaryReplies
 from db.helpers import process_request
 from utils import get_youtube_video_id
 from cogs.summary.summary import process_summary
@@ -55,11 +55,14 @@ class SummaryCog(commands.Cog):
             return
         if payload.emoji.name != '📖':
             return
-        async with self.bot.get_channel(payload.channel_id).typing():
-            has_replied = await self.has_bot_replied(payload.channel_id, payload.message_id)
-            if has_replied:
-                return
+        channel = self.bot.get_channel(payload.channel_id)
+        async with channel.typing():
             with Session(self.engine) as session:
+                statement = select(SummaryReplies).where(
+                    SummaryReplies.original_message_id == str(payload.message_id))
+                summary_reply = session.exec(statement).first()
+                if summary_reply is not None:
+                    return
                 statement = select(Request).where(
                     Request.message_id == str(payload.message_id))
                 request = session.exec(statement).first()
@@ -70,7 +73,13 @@ class SummaryCog(commands.Cog):
                 content = f'Here\'s your summary!\n\n{summary.summary}'
                 if len(content) > 2000:
                     content = content[:1997] + '...'
-                await self.reply_with_summary(payload.channel_id, payload.message_id, content)
+                reply = await self.reply_with_summary(payload.channel_id, payload.message_id, content)
+                summary_reply = SummaryReplies(
+                    original_message_id=str(payload.message_id),
+                    reply_message_id=str(reply.id),
+                    summary_id=summary.id)
+                session.add(summary_reply)
+                session.commit()
 
     async def reply_with_summary(self, channel_id: int, message_id: int, content: str):
         channel = self.bot.get_channel(channel_id)
@@ -79,35 +88,8 @@ class SummaryCog(commands.Cog):
         message = await channel.fetch_message(message_id)
         if not message:
             return
-        await message.reply(content)
-
-    async def has_bot_replied(self, channel_id, message_id):
-        """
-        Checks if the bot has already replied to a specific message in a Discord channel.
-
-        :param channel_id: ID of the Discord channel
-        :param message_id: ID of the message to check
-        :return: True if the bot has replied, False otherwise
-        """
-        # Fetch the channel
-        channel = self.bot.get_channel(channel_id)
-        if not channel:
-            print(f"Channel with ID {channel_id} not found.")
-            return False
-
-        # Fetch recent messages in the channel
-        try:
-            messages = await channel.history(limit=100).flatten()
-        except Exception as e:
-            print(f"Error fetching messages: {e}")
-            return False
-
-        # Check for bot's reply among recent messages
-        for msg in messages:
-            if msg.reference and msg.reference.message_id == message_id and msg.author == self.bot.user:
-                return True
-
-        return False
+        m = await message.reply(content)
+        return m
 
 
 def setup(bot):
