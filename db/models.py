@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Optional, List, Literal
+from typing import Optional, List
 
-from sqlmodel import Field, SQLModel, Relationship, JSON, Column
+from sqlmodel import Field, SQLModel, Relationship
 
 
 class User(SQLModel, table=True):

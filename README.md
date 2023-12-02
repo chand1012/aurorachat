@@ -1,4 +1,4 @@
-# SamAI
+# AuroraChat
 
 An everything AI for Discord.
 
