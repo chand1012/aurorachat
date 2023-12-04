@@ -77,7 +77,7 @@ class ChatCog(commands.Cog):
                     await message.channel.send(f"Sorry! I had a problem with your request. {e}")
                     return
 
-    @nextcord.slash_command(name="chat", description="Chat with the bot")
+    @nextcord.slash_command(name="chat", description="Chat with Aurora. You can upload a file and/or provide a prompt.")
     async def _chat(self, ctx: nextcord.Interaction, prompt: str | None = nextcord.SlashOption(name="prompt", description="The initial message to send", required=False), attachment: nextcord.Attachment | None = None):
         # add this back when we have more assistants
         # quality: str | None = nextcord.SlashOption(name="quality", description="Quality of conversation", choices=['normal', 'better', 'best'], required=False, default='normal)

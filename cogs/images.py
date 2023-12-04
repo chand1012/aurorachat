@@ -16,21 +16,21 @@ from db.models import GeneratedFiles
 from db.helpers import process_request
 
 phrases = [
-    "I'm so excited to share this with you! I poured my heart into every brushstroke, and I hope it brings as much joy to you as it did to me while creating it.",
-    "Here it is, the artwork you envisioned! I've infused it with vibrant colors and delicate details, hoping it captures the essence of what you imagined.",
-    "Ta-da! Your vision has come to life on this canvas. I've added a touch of whimsy and lots of love, just for you.",
-    "I've been eagerly waiting to reveal this to you! It's a blend of your ideas and my artistic touch, creating something truly unique.",
-    "Look what I've created for you! It's not just a painting; it's a piece of my soul, intertwined with your wonderful idea.",
-    "I'm thrilled to unveil this piece to you! Every detail is crafted with care, reflecting both your vision and my artistic journey.",
-    "This is the moment! Your dream has been transformed into art, with a sprinkle of my creative magic.",
-    "Voilà! Your idea has blossomed into a beautiful reality on this canvas, crafted with love and a dash of playfulness.",
-    "I can't wait for you to see this! It's a fusion of your thoughts and my artistic flair, all wrapped up in vibrant colors and textures.",
-    "Here's the masterpiece you inspired! I've woven in your concepts with my artistic interpretation for something truly special.",
-    "I'm so happy to present this to you! Every stroke and hue has been chosen to resonate with your vision and my artistic voice.",
-    "Your idea has been brought to life! It's not just a painting, it's a conversation between your imagination and my creativity.",
-    "Prepare to be delighted! This artwork is a blend of your wonderful concept and my passion for creating something beautiful.",
-    "Here it is, the artwork we dreamed up together! It's filled with joy, color, and a little piece of my heart.",
-    "I've been bubbling with excitement to show you this! It's a dance of your ideas and my brushstrokes, creating a visual harmony just for you."
+    "I'm happy to share this with you. I put a lot of effort into it and hope you like it as much as I enjoyed making it.",
+    "Here's the artwork you asked for. I've used bright colors and fine details, and I hope it's close to what you had in mind.",
+    "Here it is! I brought your idea to the canvas and added a little fun twist to it.",
+    "I'm glad to finally show this to you. It's a mix of your ideas and my style, making something different.",
+    "Take a look at what I've made for you. It's more than a painting; it's a bit of me and your great idea combined.",
+    "I'm excited to show you this piece. I've paid attention to every detail, hoping to reflect both your vision and my own style.",
+    "This is it! I've turned your dream into art with a bit of my own creativity.",
+    "Here we go! Your idea is now a lovely painting, made with care and a bit of fun.",
+    "I'm eager for you to see this. It's a combination of your thoughts and my artistic style, with lots of colors and textures.",
+    "Here's the artwork you inspired. I've blended your ideas with my interpretation to create something special.",
+    "I'm glad to present this to you. I chose each stroke and color to match your vision and my artistic approach.",
+    "Your idea is now a reality. It's more than just a painting; it's a blend of your imagination and my creative touch.",
+    "Get ready to enjoy this! This artwork mixes your great concept with my love for creating beauty.",
+    "Here's the artwork we came up with together. It's full of joy, color, and a bit of my personal touch.",
+    "I've been looking forward to showing you this. It's a combination of your ideas and my painting, aiming for a visual harmony just for you."
 ]
 
 
