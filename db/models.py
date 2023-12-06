@@ -29,6 +29,7 @@ class Request(SQLModel, table=True):
     generatedfiles: List["GeneratedFiles"] = Relationship(
         back_populates="request")
     summary: Optional["Summary"] = Relationship(back_populates="request")
+    feedback: List["Feedback"] = Relationship(back_populates="request")
 
 
 class Thread(SQLModel, table=True):
@@ -93,6 +94,7 @@ class Summary(SQLModel, table=True):
     yt_id: str = Field(default=None)
     summaryreplies: List["SummaryReplies"] = Relationship(
         back_populates="summary")
+    feedback: List["Feedback"] = Relationship(back_populates="summary")
 
     @property
     def user(self):
@@ -109,3 +111,22 @@ class SummaryReplies(SQLModel, table=True):
     summary: Optional[Summary] = Relationship(back_populates="summaryreplies")
     original_message_id: str = Field(default=None, nullable=False)
     reply_message_id: str = Field(default=None, nullable=False)
+
+
+class Feedback(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    request_id: int = Field(default=None, foreign_key="request.id")
+    request: Optional[Request] = Relationship(back_populates="feedback")
+    summary_id: Optional[int] = Field(default=None, foreign_key="summary.id")
+    summary: Optional[Summary] = Relationship(back_populates="feedback")
+    feedback: str = Field(default=None)
+    rating: int = Field(default=0, nullable=False)
+    created_at: datetime = Field(default=datetime.now(), nullable=False)
+
+    @property
+    def user(self):
+        return self.request.user
+
+    @property
+    def created_at(self):
+        return self.request.created_at

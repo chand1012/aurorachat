@@ -44,7 +44,7 @@ class ImageCog(commands.Cog):
 
     @nextcord.slash_command(name="imagine", description="Have Sam draw for you!")
     async def _imagine(self, interaction: nextcord.Interaction, prompt: str,
-                       quality: str | None = nextcord.SlashOption(name="quality", description="Image quality", required=False, choices=['normal', 'best', 'best - uncensored'], default='normal')):
+                       quality: str | None = nextcord.SlashOption(name="quality", description="Image quality", required=False, choices=['normal', 'best', 'best - uncensored'], default='best')):
         _, request, _ = process_request(
             self.engine, interaction, prompt, 'image', quality)
         log.info(
