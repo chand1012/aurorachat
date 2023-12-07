@@ -122,6 +122,9 @@ class Feedback(SQLModel, table=True):
     feedback: str = Field(default=None)
     rating: int = Field(default=0, nullable=False)
     created_at: datetime = Field(default=datetime.now(), nullable=False)
+    # user that gave the feedback. Not necessarily the user that made the request
+    user_id: int = Field(default=None, foreign_key="user.id")
+    user: Optional[User] = Relationship(back_populates="feedback")
 
     @property
     def user(self):
