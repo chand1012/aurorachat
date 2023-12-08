@@ -45,16 +45,16 @@ class WorkersAILLMClient:
     async def run(self, messages: list[dict]) -> str:
         final_response = ''
         async with self.client.stream('POST', self.base_url, json={'messages': messages, 'stream': True}, headers=self.headers) as response:
-            last_line = ''
+            # last_line = ''
             async for line in response.aiter_lines():
                 if line.startswith('data:'):
                     content = line.split(':', 1)[1].strip()
                     if content == '[DONE]':
                         break
                     resp_data: dict = json.loads(content)
-                    if resp_data.get('response') != last_line:
-                        final_response += resp_data.get('response')
-                        last_line = resp_data.get('response')
+
+                    final_response += resp_data.get('response')
+                    # last_line = resp_data.get('response')
                 else:
                     if len(line) > 0:
                         log.warning(f"Unexpected response: {line}")

@@ -43,7 +43,7 @@ class ImageCog(commands.Cog):
         self.sdxl = WorkersSDAPIAsync()
         log.info("Loaded ImageCog")
 
-    @nextcord.slash_command(name="imagine", description="Have Sam draw for you!")
+    @nextcord.slash_command(name="imagine", description="Have Aurora draw for you!")
     async def _imagine(self, interaction: nextcord.Interaction, prompt: str = nextcord.SlashOption(name="prompt", description="Prompt for the image", required=True),
                        quality: str | None = nextcord.SlashOption(name="quality", description="Image quality", required=False, choices=['best', 'uncensored'], default='best')):
         _, request, _ = process_request(
@@ -55,9 +55,9 @@ class ImageCog(commands.Cog):
             model = "sdxl"
         await interaction.response.defer()
         if 'dall-e' in model:
-            if len(prompt) > 1000 and model == 'dall-e-2':
-                # truncate to the first 1000 characters
-                prompt = prompt[:1000]
+            # if len(prompt) > 1000 and model == 'dall-e-2':
+            #     # truncate to the first 1000 characters
+            #     prompt = prompt[:1000]
             resp = self.openai.images.generate(
                 model=model,
                 prompt=prompt,

@@ -31,6 +31,12 @@ class QuickChatCog(commands.Cog):
         if not isinstance(message.channel, nextcord.TextChannel):
             return
 
+        # if the message is a reply, we don't want to respond to it.
+        # Eventually she'll treat it as a simple message thread, but for now
+        # we should just ignore it so that the feedback loop doesn't happen
+        if message.reference:
+            return
+
         async with message.channel.typing():
             log.info(
                 f'QuickChat from {message.author} on {message.channel.id}: {message.content}')
