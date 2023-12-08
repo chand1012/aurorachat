@@ -7,10 +7,12 @@ from loguru import logger as log
 from sqlmodel import Session, select
 
 from db import new_engine
-from db.models import Request, SummaryReplies
+from db.models import Request, SummaryReplies, Feedback
 from db.helpers import process_request
 from utils import get_youtube_video_id
 from cogs.summary.summary import process_summary
+
+used_emojis = ['📖', '👎', '👍']
 
 
 class SummaryCog(commands.Cog):
@@ -53,33 +55,79 @@ class SummaryCog(commands.Cog):
     async def on_raw_reaction_add(self, payload: nextcord.RawReactionActionEvent):
         if payload.user_id == self.bot.user.id:
             return
-        if payload.emoji.name != '📖':
+        if payload.emoji.name not in used_emojis:
             return
-        channel = self.bot.get_channel(payload.channel_id)
-        async with channel.typing():
+        if payload.emoji.name == '📖':
+            channel = self.bot.get_channel(payload.channel_id)
+            async with channel.typing():
+                with Session(self.engine) as session:
+                    statement = select(SummaryReplies).where(
+                        SummaryReplies.original_message_id == str(payload.message_id))
+                    summary_reply = session.exec(statement).first()
+                    if summary_reply is not None:
+                        return
+                    statement = select(Request).where(
+                        Request.message_id == str(payload.message_id))
+                    request = session.exec(statement).first()
+                    if request is None:
+                        return
+                    summary, _ = process_summary(
+                        session, self.openai, get_youtube_video_id(request.prompt), request)
+                    content = f'Here\'s your summary!\n\n{summary.summary}'
+                    if len(content) > 2000:
+                        content = content[:1997] + '...'
+                    reply = await self.reply_with_summary(payload.channel_id, payload.message_id, content)
+                    await reply.add_reaction('👍')
+                    await reply.add_reaction('👎')
+                    summary_reply = SummaryReplies(
+                        original_message_id=str(payload.message_id),
+                        reply_message_id=str(reply.id),
+                        summary_id=summary.id)
+                    session.add(summary_reply)
+                    session.commit()
+        # need to add a method to make sure there's no duplicates
+        elif payload.emoji.name == '👎':
+            # add to feedback
+            channel = self.bot.get_channel(payload.channel_id)
+            # user doesn't need to know that we're typing
             with Session(self.engine) as session:
                 statement = select(SummaryReplies).where(
-                    SummaryReplies.original_message_id == str(payload.message_id))
+                    SummaryReplies.reply_message_id == str(payload.message_id))
                 summary_reply = session.exec(statement).first()
-                if summary_reply is not None:
+                if summary_reply is None:
                     return
-                statement = select(Request).where(
-                    Request.message_id == str(payload.message_id))
-                request = session.exec(statement).first()
-                if request is None:
-                    return
-                summary, _ = process_summary(
-                    session, self.openai, get_youtube_video_id(request.prompt), request)
-                content = f'Here\'s your summary!\n\n{summary.summary}'
-                if len(content) > 2000:
-                    content = content[:1997] + '...'
-                reply = await self.reply_with_summary(payload.channel_id, payload.message_id, content)
-                summary_reply = SummaryReplies(
-                    original_message_id=str(payload.message_id),
-                    reply_message_id=str(reply.id),
-                    summary_id=summary.id)
-                session.add(summary_reply)
+                summary = summary_reply.summary
+                feedback = Feedback(
+                    request_id=summary.req_id,
+                    summary_id=summary.id,
+                    feedback='negative',
+                    rating=-1
+                )
+                session.add(feedback)
                 session.commit()
+                log.info(
+                    f"Added {feedback.feedback} feedback for {summary.id}")
+        elif payload.emoji.name == '👍':
+            # add to feedback
+            channel = self.bot.get_channel(payload.channel_id)
+            # user doesn't need to know that we're typing
+            with Session(self.engine) as session:
+                statement = select(SummaryReplies).where(
+                    SummaryReplies.reply_message_id == str(payload.message_id))
+                summary_reply = session.exec(statement).first()
+                if summary_reply is None:
+                    return
+                summary = summary_reply.summary
+                feedback = Feedback(
+                    request_id=summary.req_id,
+                    summary_id=summary.id,
+                    feedback='positive',
+                    rating=1
+                )
+                session.add(feedback)
+                session.commit()
+                log.info(
+                    f"Added {feedback.feedback} feedback for {summary.id}")
 
     async def reply_with_summary(self, channel_id: int, message_id: int, content: str):
         channel = self.bot.get_channel(channel_id)

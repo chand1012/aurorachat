@@ -28,7 +28,7 @@ Quality can be one of `normal`, `best`, or `best - uncensored`. Default is `norm
 '''
 
 long_descriptions = {
-    'chat': '''Chat with me! Both prompt and attachment are optional. This starts a thread with me, and you (or anyone else) can continue chatting with me there! I can even parse attachments!''',
+    'chat': '''Chat with me! Both prompt and attachment are optional. This starts a thread with me, and you (or anyone else) can continue chatting with me there! I can even parse attachments! If you just need to ask a quick question, you can simply tag me in a message and I'll respond!''',
     'cancel': '''Cancels the most recent request you made to me.''',
     'close': '''Close the thread you're in with me. Does not delete the thread, and does nothing if you're not in a thread with me.''',
     'delete': '''Delete the thread you're in with me. Does nothing if you're not in a thread with me.''',

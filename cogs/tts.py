@@ -19,8 +19,8 @@ class TTSCog(commands.Cog):
         self.engine = new_engine()
         log.info("Loaded TTSCog")
 
-    @nextcord.slash_command(name="speak", description="Have Sam speak for you!")
-    async def _speak(self, ctx: nextcord.Interaction, prompt: str, speed: float = nextcord.SlashOption(name="speed", description="Speech speed", required=False, default=0.9, min_value=0.25, max_value=4.0)):
+    @nextcord.slash_command(name="speak", description="Have Aurora speak for you!")
+    async def _speak(self, ctx: nextcord.Interaction, prompt: str = nextcord.SlashOption(name="prompt", description="What you want me to say!"), speed: float = nextcord.SlashOption(name="speed", description="Speech speed", required=False, default=0.9, min_value=0.25, max_value=4.0)):
         log.info(f"Generating speech with prompt: {prompt}")
         _, request, _ = process_request(
             self.engine, ctx, prompt, 'speak', 'normal')

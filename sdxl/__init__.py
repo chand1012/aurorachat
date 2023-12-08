@@ -4,6 +4,8 @@ import httpx
 import base64
 import io
 
+from sdxl.workers_ai import WorkersSDAPIAsync
+
 
 class SDAPIAsync:
     def __init__(self, base_url: str = "http://localhost:8000"):
