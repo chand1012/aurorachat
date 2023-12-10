@@ -1,5 +1,6 @@
 import os
 import json
+import math
 
 import httpx
 from loguru import logger as log
@@ -11,6 +12,8 @@ class WorkersAILLMClient:
         '@cf/meta/llama-2-7b-chat-int8': 1800,
         '@cf/meta/llama-2-7b-chat-fp16': 2500,
     }
+
+    system_prompt = 'You are Aurora, a helpful AI-powered Discord chatbot. You will always tell a user to run `/help` if they ask you to do something you cannot do. Otherwise, provide a helpful and friendly response.'
 
     def __init__(self, account_id: str | None = None, api_key: str | None = None, model: str = '@cf/mistral/mistral-7b-instruct-v0.1'):
         if not model in self.token_limits.keys():
@@ -28,6 +31,7 @@ class WorkersAILLMClient:
             'Content-Type': 'application/json',
             'Authorization': f'Bearer {self.api_key}',
         }
+        self.model = model
 
     @staticmethod
     def format_prompt(prompt: str) -> list[dict]:
@@ -41,6 +45,37 @@ class WorkersAILLMClient:
                 'role': 'user'
             }
         ]
+
+    @staticmethod
+    def estimate_tokens(prompt: str) -> int:
+        return int(math.ceil(len(prompt) / 4))
+
+    @staticmethod
+    def estimate_message_tokens(messages: list[dict]) -> int:
+        total = 0
+        for message in messages:
+            total += WorkersAILLMClient.estimate_tokens(message['content']) + 1
+        return total
+
+    def truncate_conversation(self, messages: list[dict]) -> list[dict]:
+        limit = self.token_limits[self.model]
+        total = WorkersAILLMClient.estimate_tokens(self.system_prompt) + 1
+        final_message = []
+        # reverse incoming messages
+        messages.reverse()
+        for message in messages:
+            count = WorkersAILLMClient.estimate_tokens(message['content']) + 1
+            if total + count < limit:
+                total += count
+                final_message.append(message)
+        # add the system prompt to the end
+        final_message.append({
+            'content': self.system_prompt,
+            'role': 'system'
+        })
+        # reverse the messages back
+        final_message.reverse()
+        return final_message
 
     async def run(self, messages: list[dict]) -> str:
         final_response = ''

@@ -32,7 +32,7 @@ long_descriptions = {
     'cancel': '''Cancels the most recent request you made to me.''',
     'close': '''Close the thread you're in with me. Does not delete the thread, and does nothing if you're not in a thread with me.''',
     'delete': '''Delete the thread you're in with me. Does nothing if you're not in a thread with me.''',
-    'imagine': '''Have me draw for you! Prompt is required, quality is optional. Quality can be one of `normal`, `best`, or `best - uncensored`. Default is `normal`.''',
+    'imagine': '''Have me draw for you! Prompt is required, quality is optional. Quality can be one of `normal`, `best`, or `uncensored`. Default is `normal`.''',
     'speak': '''Have me read text to you! Prompt is required. Default speed is 0.9.''',
     'ping': '''Pong!''',
 }

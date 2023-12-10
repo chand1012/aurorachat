@@ -17,6 +17,8 @@ rating_choices = {
     '😐':  0
 }
 
+used_emojis = ['👎', '👍']
+
 
 class FeedbackCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -109,6 +111,42 @@ class FeedbackCog(commands.Cog):
                 f'User {interaction.user} gave feedback on message {message.id} in channel {interaction.channel.id}: {feedback}')
 
     @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload: nextcord.RawReactionActionEvent):
+        if payload.user_id == self.bot.user.id:
+            return
+        if payload.emoji.name not in used_emojis:
+            return
+        # rather than iterating through the messages, we can just fetch the message by id
+        message_id = payload.message_id
+        channel = self.bot.get_channel(payload.channel_id)
+        message = await channel.fetch_message(message_id)
+        if not message.reference and message.reference.resolved:
+            return
+        original_message = message.reference.resolved
+        # if its thumbs up, handle it the same way as goodbot
+        if payload.emoji.name == '👍':
+            success = process_feedback(
+                None, original_message, Session(self.engine), "thumbs up", 1)
+            if success is None:
+                return
+            if success is False:
+                return
+            # this is a silent process so we don't need to send a message
+            log.info(
+                f'User {payload.user_id} gave thumbs up feedback on message {message.id} in channel {channel.id}')
+        # if its thumbs down, handle it the same way as badbot
+        elif payload.emoji.name == '👎':
+            success = process_feedback(
+                None, original_message, Session(self.engine), "thumbs down", -1)
+            if success is None:
+                return
+            if success is False:
+                return
+            # this is a silent process so we don't need to send a message
+            log.warning(
+                f'User {payload.user_id} gave thumbs down feedback on message {message.id} in channel {channel.id}')
+
+    @commands.Cog.listener()
     async def on_message(self, message: nextcord.Message):
         # Check if the message is a reply
         if message.reference and message.reference.resolved:
@@ -117,19 +155,25 @@ class FeedbackCog(commands.Cog):
 
             # Check if the bot is the author of the original message
             if original_message.author == self.bot.user:
-                # if the original message is a reply do nothing
-                if original_message.reference and original_message.reference.resolved:
-                    return
+                # check if its a response to a command
+                if original_message.reference:
+                   # get the message from the reference
+                    other_original_message_id = original_message.reference.message_id
+                    # get the message from the channel by id
+                    other_original_message = await message.channel.fetch_message(other_original_message_id)
+                    if not '/' in other_original_message.content:
+                        return
+
                 feedback = message.content
                 success = process_feedback(
                     None, original_message, Session(self.engine), feedback)
                 if success is None:
-                    await message.channel.send("I don't think I've said anything yet.")
+                    await message.channel.send("I don't think I've said anything yet.", reference=message)
                     return
                 if success is False:
-                    await message.channel.send("You've already given feedback on this request.")
+                    await message.channel.send("You've already given feedback on this request.", reference=message)
                     return
-                await message.channel.send("Thank you for your feedback!")
+                await message.channel.send("Thank you for your feedback!", reference=message)
                 log.info(
                     f'User {message.author} gave feedback on message {original_message.id} in channel {message.channel.id}: {feedback}')
 

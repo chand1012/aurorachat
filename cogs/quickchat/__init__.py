@@ -3,12 +3,15 @@ import os
 from nextcord.ext import commands
 import nextcord
 from loguru import logger as log
-# from sqlmodel import Session
+# from sqlmodel import Session, select
 
 
 from ai import WorkersAILLMClient
 from db import new_engine
-# from db.helpers import process_request
+# from db.models import Request
+from db.helpers import process_request
+
+# this will be free for all users for the foreseeable future
 
 
 class QuickChatCog(commands.Cog):
@@ -31,13 +34,26 @@ class QuickChatCog(commands.Cog):
         if not isinstance(message.channel, nextcord.TextChannel):
             return
 
-        # if the message is a reply, we don't want to respond to it.
-        # Eventually she'll treat it as a simple message thread, but for now
-        # we should just ignore it so that the feedback loop doesn't happen
-        if message.reference:
-            return
-
         async with message.channel.typing():
+            # this returns things. We don't care until we want to start rate limiting
+            process_request(self.engine, message,
+                            message.content, 'text', 'free')
+            context = []
+            # if the message is a reply, we don't want to respond to it.
+            # Eventually she'll treat it as a simple message thread, but for now
+            # we should just ignore it so that the feedback loop doesn't happen
+            if message.reference:
+                reference = message.reference
+                while reference:
+                    current_message = await message.channel.fetch_message(reference.message_id)
+                    if current_message.reference:
+                        reference = current_message.reference
+                    else:
+                        break
+                    context.append({
+                        'content': current_message.content,
+                        'role': 'assistant' if current_message.author == self.bot.user else 'user'
+                    })
             log.info(
                 f'QuickChat from {message.author} on {message.channel.id}: {message.content}')
             prompt = message.content
@@ -46,8 +62,12 @@ class QuickChatCog(commands.Cog):
             prompt = prompt.strip()
             # _, _, allowed = process_request(
             #     self.engine, message, prompt, 'text', 'free')
-            messages = self.ai.format_prompt(prompt)
-            response = await self.ai.run(messages)
+            context.append({
+                'content': prompt,
+                'role': 'user'
+            })
+            context = self.ai.truncate_conversation(context)
+            response = await self.ai.run(context)
             response = response.strip()
             log.info(
                 f'QuickChat from {message.author} on {message.channel.id}: {response}')

@@ -20,6 +20,10 @@ def process_request(engine: Engine, interaction: nextcord.Interaction | nextcord
     else:
         raise TypeError(
             f"Expected interaction or message, got {type(interaction)}")
+    if not discord_user_id:
+        raise ValueError("discord_user_id cannot be None")
+    if not message_id:
+        raise ValueError("message_id cannot be None")
     with Session(engine) as session:
         # first check if a user exists with the given discord id
         statement = select(User).where(

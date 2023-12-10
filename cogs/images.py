@@ -45,14 +45,14 @@ class ImageCog(commands.Cog):
 
     @nextcord.slash_command(name="imagine", description="Have Aurora draw for you!")
     async def _imagine(self, interaction: nextcord.Interaction, prompt: str = nextcord.SlashOption(name="prompt", description="Prompt for the image", required=True),
-                       quality: str | None = nextcord.SlashOption(name="quality", description="Image quality", required=False, choices=['best', 'uncensored'], default='best')):
+                       quality: str | None = nextcord.SlashOption(name="quality", description="Image quality", required=False, choices=['normal', 'best', 'uncensored'], default='normal')):
         _, request, _ = process_request(
             self.engine, interaction, prompt, 'image', quality)
         log.info(
             f"Generating {quality} quality image with prompt: {prompt}")
         model = 'dall-e-3'
-        if 'uncensored' in quality:
-            model = "sdxl"
+        if not 'best' in quality:
+            model = 'sdxl'
         await interaction.response.defer()
         if 'dall-e' in model:
             # if len(prompt) > 1000 and model == 'dall-e-2':
@@ -82,6 +82,18 @@ class ImageCog(commands.Cog):
             if not interaction.channel.is_nsfw() and 'uncensored' in quality:
                 await interaction.followup.send("Cannot generate uncensored image in a non-NSFW channel.")
                 return
+            if 'normal' in quality:
+                resp = self.openai.moderations.create(
+                    model="text-moderation-stable",
+                    input=prompt,
+                )
+                print(resp.results[0].category_scores.sexual)
+                if len(resp.results) == 0:
+                    raise Exception(
+                        'content_policy_violation: failed moderation')
+                if resp.results[0].flagged:
+                    raise Exception(
+                        'content_policy_violation: failed moderation')
             image = await self.sdxl.generate_image(prompt=prompt)
             size = image.getbuffer().nbytes
             image.seek(0)
