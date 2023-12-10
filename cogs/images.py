@@ -10,7 +10,7 @@ from loguru import logger as log
 from openai import OpenAI
 from sqlmodel import Session
 
-from sdxl import WorkersSDAPIAsync
+from sdxl import WorkersSDAPIAsync, SDAPIAsync
 from db import new_engine
 from db.models import GeneratedFiles
 from db.helpers import process_request
@@ -39,19 +39,19 @@ class ImageCog(commands.Cog):
         self.bot = bot
         self.openai = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
         self.engine = new_engine()
-        # self.sdxl = SDAPIAsync(base_url=os.getenv("SD_API_URL"))
+        self.sdxl_modal = SDAPIAsync(base_url=os.getenv("SD_API_URL"))
         self.sdxl = WorkersSDAPIAsync()
         log.info("Loaded ImageCog")
 
     @nextcord.slash_command(name="imagine", description="Have Aurora draw for you!")
     async def _imagine(self, interaction: nextcord.Interaction, prompt: str = nextcord.SlashOption(name="prompt", description="Prompt for the image", required=True),
-                       quality: str | None = nextcord.SlashOption(name="quality", description="Image quality", required=False, choices=['normal', 'best', 'uncensored'], default='normal')):
+                       quality: str | None = nextcord.SlashOption(name="quality", description="Image quality", required=False, choices=['normal', 'better', 'uncensored'], default='normal')):
         _, request, _ = process_request(
             self.engine, interaction, prompt, 'image', quality)
         log.info(
             f"Generating {quality} quality image with prompt: {prompt}")
         model = 'dall-e-3'
-        if not 'best' in quality:
+        if not 'better' in quality:
             model = 'sdxl'
         await interaction.response.defer()
         if 'dall-e' in model:
@@ -82,6 +82,7 @@ class ImageCog(commands.Cog):
             if not interaction.channel.is_nsfw() and 'uncensored' in quality:
                 await interaction.followup.send("Cannot generate uncensored image in a non-NSFW channel.")
                 return
+            sdxl = self.sdxl
             if 'normal' in quality:
                 resp = self.openai.moderations.create(
                     model="text-moderation-stable",
@@ -93,7 +94,9 @@ class ImageCog(commands.Cog):
                 if resp.results[0].flagged:
                     raise Exception(
                         'content_policy_violation: failed moderation')
-            image = await self.sdxl.generate_image(prompt=prompt)
+            else:
+                sdxl = self.sdxl_modal
+            image = await sdxl.generate_image(prompt=prompt)
             size = image.getbuffer().nbytes
             image.seek(0)
             await interaction.followup.send(content=random.choice(phrases), file=nextcord.File(image, filename=f"{uuid.uuid4()}.jpg"))
@@ -112,6 +115,8 @@ class ImageCog(commands.Cog):
         error_message = str(error)
         if 'content_policy_violation' in error_message:
             error_message = "Content policy violation for model. Please try again with a different prompt or try a different model."
+        if 'unavailable' in error_message:
+            error_message = "Model is currently under high loads. Please try a different model or try again later."
         if len(error_message) > 1800:
             error_message = error_message[:1800]
         try:

@@ -13,9 +13,9 @@ class SDAPIAsync:
         self.client = httpx.AsyncClient(timeout=None)
 
     async def generate_image(self, prompt: str = "string",
-                             negative_prompt: str = "",
-                             guidance_scale: float = 7.5, height: int = 512,
-                             num_inference_steps: int = 50, width: int = 512) -> io.BytesIO:
+                             negative_prompt: str = "watermark, disfigured, bad art, deformed, poorly drawn, extra limbs, close up, b&w, weird colors, blurry, depth of field, missing fingers, ugly face, extra legs",
+                             guidance_scale: float = 7.5, height: int = 1024,
+                             num_inference_steps: int = 50, width: int = 1024) -> io.BytesIO:
 
         data = {
             "prompt": prompt,
