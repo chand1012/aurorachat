@@ -148,6 +148,10 @@ class FeedbackCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: nextcord.Message):
+        if isinstance(message.channel, nextcord.DMChannel):
+            return
+        if isinstance(message.channel, nextcord.Thread):
+            return
         # Check if the message is a reply
         if message.reference and message.reference.resolved:
             # Fetch the original message that is being replied to
