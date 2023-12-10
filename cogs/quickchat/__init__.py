@@ -52,8 +52,9 @@ class QuickChatCog(commands.Cog):
                         'content': current_message.content,
                         'role': 'assistant' if current_message.author == self.bot.user else 'user'
                     })
-                    if current_message.interaction.type == 2:
-                        return
+                    if current_message.interaction:
+                        if current_message.interaction.type == 2:
+                            return
                     if current_message.reference:
                         reference = current_message.reference
                     else:
