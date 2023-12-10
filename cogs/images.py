@@ -87,7 +87,6 @@ class ImageCog(commands.Cog):
                     model="text-moderation-stable",
                     input=prompt,
                 )
-                print(resp.results[0].category_scores.sexual)
                 if len(resp.results) == 0:
                     raise Exception(
                         'content_policy_violation: failed moderation')

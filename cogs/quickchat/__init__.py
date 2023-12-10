@@ -46,14 +46,18 @@ class QuickChatCog(commands.Cog):
                 reference = message.reference
                 while reference:
                     current_message = await message.channel.fetch_message(reference.message_id)
-                    if current_message.reference:
-                        reference = current_message.reference
-                    else:
-                        break
+                    if not current_message:
+                        return
                     context.append({
                         'content': current_message.content,
                         'role': 'assistant' if current_message.author == self.bot.user else 'user'
                     })
+                    if current_message.interaction.type == 2:
+                        return
+                    if current_message.reference:
+                        reference = current_message.reference
+                    else:
+                        break
             log.info(
                 f'QuickChat from {message.author} on {message.channel.id}: {message.content}')
             prompt = message.content
@@ -70,7 +74,7 @@ class QuickChatCog(commands.Cog):
             response = await self.ai.run(context)
             response = response.strip()
             log.info(
-                f'QuickChat from {message.author} on {message.channel.id}: {response}')
+                f'QuickChat response to {message.author} on {message.channel.id}: {response}')
             # for now just echo the prompt back and print to the console
             await message.channel.send(response, reference=message)
 

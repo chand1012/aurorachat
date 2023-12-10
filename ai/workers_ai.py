@@ -94,4 +94,10 @@ class WorkersAILLMClient:
                     if len(line) > 0:
                         log.warning(f"Unexpected response: {line}")
 
+        # there's a bug in the API where the last character is duplicated
+        # but only sometimes. Check if the last character is duplicated
+        # and if it is, remove it
+        if final_response[-1] == final_response[-2]:
+            final_response = final_response[:-1]
+
         return final_response

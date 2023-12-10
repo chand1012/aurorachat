@@ -161,7 +161,9 @@ class FeedbackCog(commands.Cog):
                     other_original_message_id = original_message.reference.message_id
                     # get the message from the channel by id
                     other_original_message = await message.channel.fetch_message(other_original_message_id)
-                    if not '/' in other_original_message.content:
+                    if not other_original_message:
+                        return
+                    if not other_original_message.interaction.type == nextcord.InteractionType.application_command:
                         return
 
                 feedback = message.content
