@@ -163,6 +163,8 @@ class FeedbackCog(commands.Cog):
                     other_original_message = await message.channel.fetch_message(other_original_message_id)
                     if not other_original_message:
                         return
+                    if not other_original_message.interaction:
+                        return
                     if not other_original_message.interaction.type == nextcord.InteractionType.application_command:
                         return
 
