@@ -21,12 +21,17 @@ class CleanerCog(commands.Cog):
         self.lock = asyncio.Lock()
         log.info("Loaded CleanerCog")
         self.cleaner.start()
+        self.first_run = False
 
     def cog_unload(self):
         self.cleaner.cancel()
 
     @tasks.loop(hours=12)
     async def cleaner(self):
+        if not self.first_run:
+            log.info("Skipping first run.")
+            self.first_run = True
+            return
         async with self.lock:
             try:
                 log.info("Running cleaner")

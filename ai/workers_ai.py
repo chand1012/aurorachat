@@ -68,6 +68,8 @@ class WorkersAILLMClient:
             if total + count < limit:
                 total += count
                 final_message.append(message)
+            else:
+                break
         # add the system prompt to the end
         final_message.append({
             'content': self.system_prompt,

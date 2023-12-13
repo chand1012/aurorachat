@@ -44,9 +44,11 @@ class QuickChatCog(commands.Cog):
             # we should just ignore it so that the feedback loop doesn't happen
             if message.reference:
                 reference = message.reference
-                while reference:
+                while reference and len(context) < 6:
                     current_message = await message.channel.fetch_message(reference.message_id)
                     if not current_message:
+                        return
+                    if 'conversation is getting a bit long' in current_message.content:
                         return
                     context.append({
                         'content': current_message.content,
@@ -61,6 +63,11 @@ class QuickChatCog(commands.Cog):
                         break
             log.info(
                 f'QuickChat from {message.author} on {message.channel.id}: {message.content}')
+            if len(context) > 6:
+                log.warning(
+                    f'User {message.author} has a long message thread.')
+                await message.channel.send("This conversation is getting a bit long, so I'm going to stop here. If you want to have longer conversations with me, please use the `/chat` command.", reference=message)
+                return
             prompt = message.content
             # remove the mention from the prompt
             prompt = prompt.replace(f'<@{self.bot.user.id}>', 'Aurora,')
