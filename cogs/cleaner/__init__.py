@@ -11,6 +11,7 @@ from sqlmodel import Session, select
 
 from db import new_engine
 from db.models import Request
+from utils.webhooks import send_error_webhook
 
 
 class CleanerCog(commands.Cog):
@@ -60,6 +61,7 @@ class CleanerCog(commands.Cog):
                 log.info("Finished cleaning")
             except Exception as e:
                 log.error(f'Error cleaning: {e}')
+                await send_error_webhook(str(e), 'cleaner', '', '', '', '')
 
     @cleaner.before_loop
     async def before_printer(self):

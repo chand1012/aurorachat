@@ -13,6 +13,7 @@ from db.models import Thread
 from db.helpers import process_request
 from utils.upload import process_upload, process_audio, AUDIO_FILE_EXT
 from cogs.chat.process_thread import process_thread
+from utils.webhooks import send_error_webhook
 
 
 class ChatCog(commands.Cog):
@@ -75,6 +76,8 @@ class ChatCog(commands.Cog):
                 except Exception as e:
                     log.error(f"Error processing thread: {e}")
                     await message.channel.send(f"Sorry! I had a problem with your request. {e}")
+                    await send_error_webhook(str(e), 'thread_chat', message.channel.id, message.id,
+                                             message.author.id, message.content)
                     return
 
     @nextcord.slash_command(name="chat", description="Chat with Aurora. You can upload a file and/or provide a prompt.")
@@ -131,6 +134,8 @@ class ChatCog(commands.Cog):
             await ctx.followup.send(f"Error starting chat: {error}", ephemeral=True)
         except:
             await ctx.send(f"Error starting chat: {error}", ephemeral=True)
+            await send_error_webhook(str(error), 'chat', str(ctx.channel.id), str(ctx.message.id),
+                                     str(ctx.author.id), str(ctx.message.content))
 
     @nextcord.slash_command(name="cancel", description="Cancels the current message. Does nothing if the bot is not the owner or if not in a thread.")
     async def _cancel(self, ctx: nextcord.Interaction):
@@ -197,6 +202,8 @@ class ChatCog(commands.Cog):
             await ctx.followup.send(f"Error closing thread: {error_message}", ephemeral=True)
         except:
             await ctx.send(f"Error closing thread: {error_message}", ephemeral=True)
+            await send_error_webhook(str(error), 'close', str(ctx.channel.id), str(ctx.message.id),
+                                     str(ctx.author.id), str(ctx.message.content))
 
     @nextcord.slash_command(name="delete", description="Delete the thread. Does nothing if the bot is not the owner or if not in a thread.")
     async def _delete(self, ctx: nextcord.Interaction):
@@ -231,6 +238,8 @@ class ChatCog(commands.Cog):
             await ctx.followup.send(f"Error deleting thread: {error_message}", ephemeral=True)
         except:
             await ctx.channel.send(f"Error deleting thread: {error_message}", ephemeral=True)
+            await send_error_webhook(str(error), 'delete', str(ctx.channel.id), str(ctx.message.id),
+                                     str(ctx.author.id), str(ctx.message.content))
 
 
 def setup(bot):

@@ -11,6 +11,7 @@ from db.models import Request, SummaryReplies, Feedback
 from db.helpers import process_request
 from utils import get_youtube_video_id
 from cogs.summary.summary import process_summary
+from utils.webhooks import send_error_webhook
 
 used_emojis = ['📖', '👎', '👍']
 
@@ -49,6 +50,8 @@ class SummaryCog(commands.Cog):
                 except Exception as e:
                     error_message = str(e)
                     # send an error log, but don't reply to the message
+                    await send_error_webhook(error_message, 'summary', message.channel.id, message.id,
+                                             message.author.id, message.content)
                     log.error(f"Error getting transcript: {error_message}")
 
     @commands.Cog.listener()

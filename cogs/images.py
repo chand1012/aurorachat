@@ -14,6 +14,7 @@ from sdxl import WorkersSDAPIAsync, SDAPIAsync
 from db import new_engine
 from db.models import GeneratedFiles
 from db.helpers import process_request
+from utils.webhooks import send_error_webhook
 
 phrases = [
     "I'm happy to share this with you. I put a lot of effort into it and hope you like it as much as I enjoyed making it.",
@@ -123,6 +124,10 @@ class ImageCog(commands.Cog):
             await ctx.followup.send(f"Error generating image: {error_message}", ephemeral=True)
         except:
             await ctx.send(f"Error generating image: {error_message}", ephemeral=True)
+        if 'content_policy_violation' in error_message:
+            return
+        await send_error_webhook(error_message, 'imagine', ctx.channel.id, ctx.message.id,
+                                 ctx.author.id, ctx.message.content)
 
 
 def setup(bot):

@@ -10,6 +10,7 @@ from loguru import logger as log
 from db import new_engine
 
 from cogs.feedback.process_feedback import process_feedback
+from utils.webhooks import send_feedback_webhook
 
 rating_choices = {
     '👍':  1,
@@ -49,6 +50,7 @@ class FeedbackCog(commands.Cog):
         await interaction.response.send_message("Thank you! I try my best.", ephemeral=True)
         log.info(
             f'User {interaction.user} gave goodbot feedback on message {last_message.id} in channel {interaction.channel.id}')
+        await send_feedback_webhook(str(interaction.user), str(last_message), str(interaction.channel.id), "goodbot")
 
     @nextcord.slash_command(name="badbot", description="Tell Aurora she's a bad bot!")
     async def _badbot(self, interaction: nextcord.Interaction):
@@ -72,6 +74,7 @@ class FeedbackCog(commands.Cog):
         await interaction.response.send_message("I'm sorry! I'm just trying my best!", ephemeral=True)
         log.warning(
             f'User {interaction.user} gave badbot feedback on message {last_message.id} in channel {interaction.channel.id}')
+        await send_feedback_webhook(str(interaction.user), str(last_message), str(interaction.channel.id), "badbot")
 
     @nextcord.slash_command(name="feedback", description="Give feedback on a request!")
     async def _feedback(self, interaction: nextcord.Interaction,
@@ -109,6 +112,7 @@ class FeedbackCog(commands.Cog):
         else:
             log.warning(
                 f'User {interaction.user} gave feedback on message {message.id} in channel {interaction.channel.id}: {feedback}')
+        await send_feedback_webhook(str(interaction.user), str(last_message), str(interaction.channel.id), feedback)
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: nextcord.RawReactionActionEvent):
