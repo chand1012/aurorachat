@@ -26,6 +26,7 @@ async def process_thread(session: Session, o: OpenAI, channel: nextcord.PartialM
         thread_id=db_thread.openai_id,
         assistant_id=db_thread.assistant_id,
     )
+    new_thread = db_thread.last_run_id is None
     db_thread.last_run_id = run.id
     session.commit()
     while run.status != "completed":
@@ -103,6 +104,10 @@ async def process_thread(session: Session, o: OpenAI, channel: nextcord.PartialM
     message_responses.reverse()
     for response in message_responses:
         await channel.send(response)
+    # get the first 1000 characters of the first message
+    # this will be used to make the title
+    title = message_responses[0][:1000]
+    return title, new_thread
 
 
 def process_action(session: Session, o: OpenAI, request: Request, name: str, argument: str) -> str:

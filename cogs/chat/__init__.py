@@ -72,7 +72,22 @@ class ChatCog(commands.Cog):
                                         "File too large.")
                                 files.append(upload.openai_id)
 
-                        await process_thread(session, self.openai, message.channel, db_thread, request, files)
+                        first_message_text, new_thread = await process_thread(session, self.openai, message.channel, db_thread, request, files)
+                        if new_thread:
+                            # summarize the message into a title for the thread
+                            summary = self.openai.chat.completions.create(
+                                messages=[{
+                                    'content': 'You are a helpful assistant who summarizes any text you receive in to less than 75 characters.',
+                                    'role': 'system'
+                                }, {
+                                    'content': first_message_text,
+                                    'role': 'user'
+                                }],
+                                model='gpt-3.5-turbo'
+                            )
+                            summary = summary.choices[0].message.content
+                            summary = truncate_string(summary)
+                            await message.channel.edit(name=summary)
                 except Exception as e:
                     log.error(f"Error processing thread: {e}")
                     await message.channel.send(f"Sorry! I had a problem with your request. {e}")
@@ -81,35 +96,26 @@ class ChatCog(commands.Cog):
                     return
 
     @nextcord.slash_command(name="chat", description="Chat with Aurora. You can upload a file and/or provide a prompt.")
-    async def _chat(self, ctx: nextcord.Interaction, prompt: str | None = nextcord.SlashOption(name="prompt", description="The initial message to send", required=False), attachment: nextcord.Attachment | None = nextcord.SlashOption(name="attachment", description="A file to upload", required=False)):
+    async def _chat(self, ctx: nextcord.Interaction):
         # add this back when we have more assistants
         # quality: str | None = nextcord.SlashOption(name="quality", description="Quality of conversation", choices=['normal', 'better', 'best'], required=False, default='normal)
         await ctx.response.defer(ephemeral=False)
-        if attachment and not prompt:
-            await ctx.followup.send("You must provide a prompt if you are uploading a file.", ephemeral=True)
         # eventually there will be more assistants with differing quality
         assistant = os.getenv('ASSISTANT_ID')
         log.info(
-            f"Creating new thread with assistant ({assistant}) for on {ctx.guild.name} ({ctx.guild.id}. Initial message: '{prompt}')")
+            f"Creating new thread with assistant ({assistant}) for on {ctx.guild.name} ({ctx.guild.id})")
         # process the request
-        user, request, allowed = process_request(
-            self.engine, ctx, prompt, 'text', 'normal')
+        _, request, allowed = process_request(
+            self.engine, ctx, 'New Chat', 'text', 'normal')
         if not allowed:
             await ctx.followup.send("You have reached your request limit. Please try again in a few hours.")
             return
         if not request:
             raise commands.CommandError("Error processing request")
-        upload = None
-        files = []
         with Session(self.engine) as session:
-            if attachment:
-                upload = await process_upload(session, self.openai, attachment, user, request)
-                if not upload:
-                    raise commands.CommandError("File too large.")
-                files.append(upload.openai_id)
             thread = self.openai.beta.threads.create()
             # create a new discord thread
-            thread_name = f"{truncate_string(prompt) if prompt else 'New Chat'}"
+            thread_name = "New Chat"
             thread_channel = await ctx.channel.create_thread(name=thread_name, type=nextcord.ChannelType.public_thread)
             db_thread = Thread(
                 request_id=request.id,
@@ -121,11 +127,7 @@ class ChatCog(commands.Cog):
             session.commit()
             session.refresh(db_thread)
             await ctx.followup.send(f"Created thread {thread_channel.mention}")
-            if prompt is None:
-                await thread_channel.send("Hello! I am Sam, your helpful assistant. How can I help you today?")
-            else:
-                with thread_channel.typing():
-                    await process_thread(session, self.openai, thread_channel, db_thread, request, files)
+            await thread_channel.send("Hello! I'm Aurora, your helpful assistant. How can I help you today?")
 
     @_chat.error
     async def _chat_error(self, ctx: nextcord.Interaction, error: commands.CommandError):
