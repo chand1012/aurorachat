@@ -34,6 +34,8 @@ phrases = [
     "I've been looking forward to showing you this. It's a combination of your ideas and my painting, aiming for a visual harmony just for you."
 ]
 
+NEGATIVE_PROMPT = "watermark, disfigured, bad art, deformed, poorly drawn, extra limbs, close up, b&w, weird colors, blurry, depth of field, missing fingers, ugly face, extra legs"
+
 
 class ImageCog(commands.Cog):
     def __init__(self, bot):
@@ -46,7 +48,9 @@ class ImageCog(commands.Cog):
 
     @nextcord.slash_command(name="imagine", description="Have Aurora draw for you!")
     async def _imagine(self, interaction: nextcord.Interaction, prompt: str = nextcord.SlashOption(name="prompt", description="Prompt for the image", required=True),
-                       quality: str | None = nextcord.SlashOption(name="quality", description="Image quality", required=False, choices=['normal', 'better', 'uncensored'], default='normal')):
+                       quality: str | None = nextcord.SlashOption(name="quality", description="Image quality", required=False, choices=[
+                                                                  'normal', 'better', 'best', 'uncensored'], default='normal'),
+                       negative_prompt: str = nextcord.SlashOption(name="negative_prompt", description="Negative prompt for the image. Only supported on \"best\" and \"uncensored\" qualities.", required=False, default=NEGATIVE_PROMPT)):
         _, request, _ = process_request(
             self.engine, interaction, prompt, 'image', quality)
         log.info(
@@ -56,9 +60,6 @@ class ImageCog(commands.Cog):
             model = 'sdxl'
         await interaction.response.defer()
         if 'dall-e' in model:
-            # if len(prompt) > 1000 and model == 'dall-e-2':
-            #     # truncate to the first 1000 characters
-            #     prompt = prompt[:1000]
             resp = self.openai.images.generate(
                 model=model,
                 prompt=prompt,
@@ -84,7 +85,7 @@ class ImageCog(commands.Cog):
                 await interaction.followup.send("Cannot generate uncensored image in a non-NSFW channel.")
                 return
             sdxl = self.sdxl
-            if 'normal' in quality:
+            if not 'uncensored' in quality:
                 resp = self.openai.moderations.create(
                     model="text-moderation-stable",
                     input=prompt,
@@ -95,9 +96,10 @@ class ImageCog(commands.Cog):
                 if resp.results[0].flagged:
                     raise Exception(
                         'content_policy_violation: failed moderation')
-            else:
+
+            if 'best' or 'uncensored' in quality:
                 sdxl = self.sdxl_modal
-            image = await sdxl.generate_image(prompt=prompt)
+            image = await sdxl.generate_image(prompt=prompt, negative_prompt=negative_prompt)
             size = image.getbuffer().nbytes
             image.seek(0)
             await interaction.followup.send(content=random.choice(phrases), file=nextcord.File(image, filename=f"{uuid.uuid4()}.jpg"))
