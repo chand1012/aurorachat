@@ -10,7 +10,7 @@ from sqlmodel import Session, select
 from utils import truncate_string, process_audio
 from db import new_engine
 from db.models import Thread
-from db.helpers import process_request
+from db.helpers import process_request, process_text_response
 from utils.upload import process_upload, process_audio, AUDIO_FILE_EXT
 from cogs.chat.process_thread import process_thread
 from utils.webhooks import send_error_webhook
@@ -72,7 +72,8 @@ class ChatCog(commands.Cog):
                                         "File too large.")
                                 files.append(upload.openai_id)
 
-                        first_message_text, new_thread = await process_thread(session, self.openai, message.channel, db_thread, request, files)
+                        first_message_text, new_thread, full_response = await process_thread(session, self.openai, message.channel, db_thread, request, files)
+                        process_text_response(session, request, full_response)
                         if new_thread:
                             # summarize the message into a title for the thread
                             summary = self.openai.chat.completions.create(

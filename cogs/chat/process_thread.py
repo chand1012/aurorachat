@@ -107,7 +107,8 @@ async def process_thread(session: Session, o: OpenAI, channel: nextcord.PartialM
     # get the first 1000 characters of the first message
     # this will be used to make the title
     title = message_responses[0][:1000]
-    return title, new_thread
+    full_response = '\n'.join(message_responses)
+    return title, new_thread, full_response
 
 
 def process_action(session: Session, o: OpenAI, request: Request, name: str, argument: str) -> str:

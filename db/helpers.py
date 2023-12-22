@@ -4,7 +4,7 @@ import nextcord
 from sqlmodel import Session, select
 from sqlalchemy.engine.base import Engine
 
-from db.models import Request, User
+from db.models import Request, User, TextResponse
 
 
 def process_request(engine: Engine, interaction: nextcord.Interaction | nextcord.Message, prompt: str, req_type: str, quality: str):
@@ -63,3 +63,12 @@ def process_request(engine: Engine, interaction: nextcord.Interaction | nextcord
         #     return user, None, False
 
         return user, req, True
+
+
+def process_text_response(session: Session, req: Request, response: str):
+    '''Tracks text only responses'''
+    text_response = TextResponse(request_id=req.id, response=response)
+    session.add(text_response)
+    session.commit()
+    session.refresh(text_response)
+    return text_response

@@ -33,7 +33,7 @@ class TTSCog(commands.Cog):
             speed=speed
         )
         b = BytesIO(resp.read())
-        f = nextcord.File(b, filename="sam.mp3")
+        f = nextcord.File(b, filename="aurora.mp3")
         b.seek(0)
         size = b.getbuffer().nbytes
         await ctx.followup.send(file=f)

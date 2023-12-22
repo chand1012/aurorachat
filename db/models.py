@@ -30,6 +30,7 @@ class Request(SQLModel, table=True):
         back_populates="request")
     summary: Optional["Summary"] = Relationship(back_populates="request")
     feedback: List["Feedback"] = Relationship(back_populates="request")
+    textresponse: List["TextResponse"] = Relationship(back_populates="request")
 
 
 class Thread(SQLModel, table=True):
@@ -133,3 +134,12 @@ class Feedback(SQLModel, table=True):
     @property
     def created_at(self):
         return self.request.created_at
+
+
+class TextResponse(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    request_id: int = Field(default=None, foreign_key="request.id")
+    request: Optional[Request] = Relationship(back_populates="textresponse")
+    response: str = Field(default=None, nullable=False)
+    # useful for looking at response times. Check the difference between created_at and request.created_at
+    created_at: datetime = Field(default=datetime.now(), nullable=False)

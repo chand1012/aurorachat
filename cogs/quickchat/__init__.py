@@ -3,13 +3,13 @@ import os
 from nextcord.ext import commands
 import nextcord
 from loguru import logger as log
-# from sqlmodel import Session, select
+from sqlmodel import Session
 
 
 from ai import WorkersAILLMClient
 from db import new_engine
 # from db.models import Request
-from db.helpers import process_request
+from db.helpers import process_request, process_text_response
 from utils.webhooks import send_error_webhook
 
 # this will be free for all users for the foreseeable future
@@ -38,8 +38,8 @@ class QuickChatCog(commands.Cog):
         try:
             async with message.channel.typing():
                 # this returns things. We don't care until we want to start rate limiting
-                process_request(self.engine, message,
-                                message.content, 'text', 'free')
+                _, req, _ = process_request(self.engine, message,
+                                            message.content, 'text', 'free')
                 context = []
                 # if the message is a reply, we don't want to respond to it.
                 # Eventually she'll treat it as a simple message thread, but for now
@@ -83,6 +83,8 @@ class QuickChatCog(commands.Cog):
                 context = self.ai.truncate_conversation(context)
                 response = await self.ai.run(context)
                 response = response.strip()
+                with Session(self.engine) as session:
+                    process_text_response(session, req, response)
                 log.info(
                     f'QuickChat response to {message.author} on {message.channel.id}: {response}')
                 # for now just echo the prompt back and print to the console
