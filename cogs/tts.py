@@ -22,8 +22,11 @@ class TTSCog(commands.Cog):
     @nextcord.slash_command(name="speak", description="Have Aurora speak for you!")
     async def _speak(self, ctx: nextcord.Interaction, prompt: str = nextcord.SlashOption(name="prompt", description="What you want me to say!"), speed: float = nextcord.SlashOption(name="speed", description="Speech speed", required=False, default=0.9, min_value=0.25, max_value=4.0)):
         log.info(f"Generating speech with prompt: {prompt}")
-        _, request, _ = process_request(
+        _, request, allowed = process_request(
             self.engine, ctx, prompt, 'speak', 'normal')
+        if not allowed:
+            await ctx.response.send_message("Sorry, you've reached the free limit for today. Please try again tomorrow.", ephemeral=True)
+            return
         await ctx.response.defer(ephemeral=False)
         resp = self.openai.audio.speech.create(
             model="tts-1",

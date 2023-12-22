@@ -1,14 +1,70 @@
-# from datetime import datetime, timedelta
+from datetime import datetime, timedelta
+from typing import List
 
 import nextcord
 from sqlmodel import Session, select
 from sqlalchemy.engine.base import Engine
 
-from db.models import Request, User, TextResponse
+from db.models import Request, User, TextResponse, ServerOverrides
+
+# both every 24 hours
+FREE_LIMITS = {
+    'text_free': 100,
+    'text': 10,
+    'image': 1,
+    'image_normal': 3,
+    'speak': 3
+}
+
+PAID_LIMITS = {
+    'text_free': 500,
+    'text': 400,
+    'image': 10,
+    'image_normal': 60,
+    'speak': 100,
+}
+
+# for testing
+FREE_LIMITS = {
+    'text_free': 1,
+    'text': 1,
+    'image': 1,
+    'image_normal': 1,
+    'speak': 1
+}
+
+
+def handle_rate_limit(requests: List[Request], tier: str) -> bool:
+    request_dict = {
+        'text_free': 0,
+        'text': 0,
+        'image': 0,
+        'image_normal': 0,
+        'speak': 0
+    }
+
+    for request in requests:
+        if request.req_type == 'text' and request.quality != 'free':
+            request_dict['text'] += 1
+        elif request.req_type == 'text' and request.quality == 'free':
+            request_dict['text_free'] += 1
+        elif request.req_type == 'image' and request.quality != 'normal':
+            request_dict['image'] += 1
+        elif request.req_type == 'image' and request.quality == 'normal':
+            request_dict['image_normal'] += 1
+        elif request.req_type == 'speak':
+            request_dict['speak'] += 1
+
+    limits = FREE_LIMITS if tier == 'free' else PAID_LIMITS
+
+    for key, value in request_dict.items():
+        if value >= limits[key]:
+            return True
+    return False
 
 
 def process_request(engine: Engine, interaction: nextcord.Interaction | nextcord.Message, prompt: str, req_type: str, quality: str):
-    '''Takes in a request and processes it, returning true if the user can continue to the next step, false otherwise'''
+    '''Takes in a request and processes it, returning a user object, a request object, and a rate limit status, which is true if the user can continue to the next step, false otherwise'''
     discord_user_id = None
     message_id = None
     if isinstance(interaction, nextcord.Interaction):
@@ -47,22 +103,27 @@ def process_request(engine: Engine, interaction: nextcord.Interaction | nextcord
         )
         session.add(req)
         session.commit()
-        # get the request's id
-        req = session.exec(select(Request).where(
-            Request.user_id == user.id).where(Request.prompt == prompt)).first()
+        session.refresh(req)
 
-        # # get the number of requests the user has made in the last 720 hours
-        # statement = select(Request).where(
-        #     Request.user_id == user.id).where(Request.created_at > datetime.now() - timedelta(hours=720))
+        # check if we're on a server with a server override
+        statement = select(ServerOverrides).where(
+            ServerOverrides.guild_id == req.guild_id)
+        server_override = session.exec(statement).first()
+        if server_override:
+            # if we are, we can ignore rate limits
+            return user, req, True
 
-        # num_requests = len(session.exec(statement).all())
+        # here is where rate limits get enforced.
+        # get all requests the user has made in the last 24 hours
+        statement = select(Request).where(Request.user_id == user.id).where(
+            Request.created_at >= datetime.now() - timedelta(hours=24))
+        requests = session.exec(statement).all()
 
-        # TODO this is where we'll ratelimit based on use
-        # if num_requests >= 5:
-        #     # user has made too many requests
-        #     return user, None, False
+        tier = user.payment_status or 'free'
 
-        return user, req, True
+        hit_rate_limit = handle_rate_limit(requests, tier)
+
+        return user, req, not hit_rate_limit
 
 
 def process_text_response(session: Session, req: Request, response: str):

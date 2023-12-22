@@ -38,8 +38,11 @@ class QuickChatCog(commands.Cog):
         try:
             async with message.channel.typing():
                 # this returns things. We don't care until we want to start rate limiting
-                _, req, _ = process_request(self.engine, message,
-                                            message.content, 'text', 'free')
+                _, req, allowed = process_request(self.engine, message,
+                                                  message.content, 'text', 'free')
+                if not allowed:
+                    await message.channel.send("Sorry, you've reached the free limit for today. Please try again tomorrow.", reference=message)
+                    return
                 context = []
                 # if the message is a reply, we don't want to respond to it.
                 # Eventually she'll treat it as a simple message thread, but for now

@@ -51,8 +51,11 @@ class ImageCog(commands.Cog):
                        quality: str | None = nextcord.SlashOption(name="quality", description="Image quality", required=False, choices=[
                                                                   'normal', 'better', 'best', 'uncensored'], default='normal'),
                        negative_prompt: str = nextcord.SlashOption(name="negative_prompt", description="Negative prompt for the image. Only supported on \"best\" and \"uncensored\" qualities.", required=False, default=NEGATIVE_PROMPT)):
-        _, request, _ = process_request(
+        _, request, allowed = process_request(
             self.engine, interaction, prompt, 'image', quality)
+        if not allowed:
+            await interaction.response.send_message("Sorry, you've reached the free limit for today. Please try again tomorrow.", ephemeral=True)
+            return
         log.info(
             f"Generating {quality} quality image with prompt: {prompt}")
         model = 'dall-e-3'

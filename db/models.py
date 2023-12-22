@@ -33,6 +33,13 @@ class Request(SQLModel, table=True):
     textresponse: List["TextResponse"] = Relationship(back_populates="request")
 
 
+class ServerOverrides(SQLModel, table=True):
+    '''Used to allow certain servers to ignore rate limits. Eventually this will be replaced with a more robust system. For now if they're in the table, they can ignore rate limits.'''
+    id: Optional[int] = Field(default=None, primary_key=True)
+    guild_id: str = Field(default=None, unique=True, nullable=False)
+    payment_status: Optional[str] = Field(default=None)
+
+
 class Thread(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     request_id: int = Field(default=None, foreign_key="request.id")

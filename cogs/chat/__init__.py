@@ -39,7 +39,7 @@ class ChatCog(commands.Cog):
                 user, request, allowed = process_request(
                     self.engine, message, prompt, 'text', 'normal')
                 if not allowed:
-                    await message.channel.send("You have reached your request limit now. Please try again in a few hours.")
+                    await message.channel.send("Sorry, you've reached the free limit for today. Please try again tomorrow.")
                     return
                 try:
                     with Session(self.engine) as session:
