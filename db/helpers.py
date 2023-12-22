@@ -34,7 +34,7 @@ PAID_LIMITS = {
 # }
 
 
-def handle_rate_limit(requests: List[Request], tier: str) -> bool:
+def handle_rate_limit(requests: List[Request], tier: str, item: str) -> bool:
     request_dict = {
         'text_free': 0,
         'text': 0,
@@ -58,7 +58,7 @@ def handle_rate_limit(requests: List[Request], tier: str) -> bool:
     limits = FREE_LIMITS if tier == 'free' else PAID_LIMITS
 
     for key, value in request_dict.items():
-        if value >= limits[key]:
+        if value >= limits[key] and key == item:
             return True
     return False
 
@@ -121,7 +121,15 @@ def process_request(engine: Engine, interaction: nextcord.Interaction | nextcord
 
         tier = user.payment_status or 'free'
 
-        hit_rate_limit = handle_rate_limit(requests, tier)
+        # not the best way to do this
+        # but good enough for now
+        item = req_type
+        if req_type == 'image' and quality == 'normal':
+            item = 'image_normal'
+        if req_type == 'text' and quality == 'free':
+            item = 'text_free'
+
+        hit_rate_limit = handle_rate_limit(requests, tier, item)
 
         return user, req, not hit_rate_limit
 
