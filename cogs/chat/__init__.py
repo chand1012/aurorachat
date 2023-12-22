@@ -6,6 +6,7 @@ import nextcord
 from loguru import logger as log
 from openai import OpenAI
 from sqlmodel import Session, select
+import humanize
 
 from utils import truncate_string, process_audio
 from db import new_engine
@@ -36,10 +37,10 @@ class ChatCog(commands.Cog):
                 f'Received message in thread on {message.guild.name} ({message.guild.id})')
             async with message.channel.typing():
                 prompt = message.content
-                user, request, allowed = process_request(
+                user, request, time_remaining = process_request(
                     self.engine, message, prompt, 'text', 'normal')
-                if not allowed:
-                    await message.channel.send("Sorry, you've reached the free limit for today. Please try again tomorrow.")
+                if time_remaining is not None:
+                    await message.channel.send(f"Sorry, you've reached the free limit for today. Please try again in {humanize.precisedelta(time_remaining)}")
                     return
                 try:
                     with Session(self.engine) as session:
@@ -106,10 +107,10 @@ class ChatCog(commands.Cog):
         log.info(
             f"Creating new thread with assistant ({assistant}) for on {ctx.guild.name} ({ctx.guild.id})")
         # process the request
-        _, request, allowed = process_request(
+        _, request, time_remaining = process_request(
             self.engine, ctx, 'New Chat', 'text', 'normal')
-        if not allowed:
-            await ctx.followup.send("You have reached your request limit. Please try again in a few hours.")
+        if time_remaining is not None:
+            await ctx.followup.send(f"You have reached your request limit. Please try again in {humanize.precisedelta(time_remaining)}", ephemeral=True)
             return
         if not request:
             raise commands.CommandError("Error processing request")

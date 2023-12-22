@@ -6,6 +6,7 @@ import nextcord
 from loguru import logger as log
 from openai import OpenAI
 from sqlmodel import Session
+import humanize
 
 from db import new_engine
 from db.models import GeneratedFiles
@@ -22,10 +23,10 @@ class TTSCog(commands.Cog):
     @nextcord.slash_command(name="speak", description="Have Aurora speak for you!")
     async def _speak(self, ctx: nextcord.Interaction, prompt: str = nextcord.SlashOption(name="prompt", description="What you want me to say!"), speed: float = nextcord.SlashOption(name="speed", description="Speech speed", required=False, default=0.9, min_value=0.25, max_value=4.0)):
         log.info(f"Generating speech with prompt: {prompt}")
-        _, request, allowed = process_request(
+        _, request, time_remaining = process_request(
             self.engine, ctx, prompt, 'speak', 'normal')
-        if not allowed:
-            await ctx.response.send_message("Sorry, you've reached the free limit for today. Please try again tomorrow.", ephemeral=True)
+        if time_remaining is not None:
+            await ctx.response.send_message(f"Sorry, you've reached the free limit for today. Please try again in {humanize.precisedelta(time_remaining)} .", ephemeral=True)
             return
         await ctx.response.defer(ephemeral=False)
         resp = self.openai.audio.speech.create(

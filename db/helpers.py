@@ -4,6 +4,7 @@ from typing import List
 import nextcord
 from sqlmodel import Session, select
 from sqlalchemy.engine.base import Engine
+from loguru import logger as log
 
 from db.models import Request, User, TextResponse, ServerOverrides
 
@@ -63,7 +64,7 @@ def handle_rate_limit(requests: List[Request], tier: str, item: str) -> bool:
     return False
 
 
-def process_request(engine: Engine, interaction: nextcord.Interaction | nextcord.Message, prompt: str, req_type: str, quality: str):
+def process_request(engine: Engine, interaction: nextcord.Interaction | nextcord.Message, prompt: str, req_type: str, quality: str) -> tuple[User, Request | None, timedelta | None]:
     '''Takes in a request and processes it, returning a user object, a request object, and a rate limit status, which is true if the user can continue to the next step, false otherwise'''
     discord_user_id = None
     message_id = None
@@ -92,26 +93,26 @@ def process_request(engine: Engine, interaction: nextcord.Interaction | nextcord
             session.commit()
             user = session.exec(statement).first()
 
-        req = Request(
-            user_id=user.id,
-            prompt=prompt,
-            req_type=req_type,
-            quality=quality,
-            guild_id=str(interaction.guild.id),
-            channel_id=str(interaction.channel.id),
-            message_id=message_id
-        )
-        session.add(req)
-        session.commit()
-        session.refresh(req)
-
         # check if we're on a server with a server override
         statement = select(ServerOverrides).where(
-            ServerOverrides.guild_id == req.guild_id)
+            ServerOverrides.guild_id == str(interaction.guild.id))
         server_override = session.exec(statement).first()
         if server_override:
             # if we are, we can ignore rate limits
-            return user, req, True
+            req = Request(
+                user_id=user.id,
+                prompt=prompt,
+                req_type=req_type,
+                quality=quality,
+                guild_id=str(interaction.guild.id),
+                channel_id=str(interaction.channel.id),
+                message_id=message_id
+            )
+            session.add(req)
+            session.commit()
+            session.refresh(req)
+
+            return user, req, None
 
         # here is where rate limits get enforced.
         # get all requests the user has made in the last 24 hours
@@ -130,8 +131,32 @@ def process_request(engine: Engine, interaction: nextcord.Interaction | nextcord
             item = 'text_free'
 
         hit_rate_limit = handle_rate_limit(requests, tier, item)
+        if hit_rate_limit:
+            log.warning(f'User {user.id} ({tier}) hit rate limit for {item}')
+            # get the most recent request made by the user within the last 24 hours
+            statement = select(Request).where(Request.user_id == user.id).where(
+                Request.created_at >= datetime.now() - timedelta(hours=24)).order_by(Request.created_at.desc()).limit(1)
+            last_request = session.exec(statement).first()
+            # get the time remaining until the user can make another request
+            time_remaining = last_request.created_at + \
+                timedelta(hours=24) - datetime.now()
+            return user, None, time_remaining
 
-        return user, req, not hit_rate_limit
+        # only add the request if the user hasn't hit the rate limit
+        req = Request(
+            user_id=user.id,
+            prompt=prompt,
+            req_type=req_type,
+            quality=quality,
+            guild_id=str(interaction.guild.id),
+            channel_id=str(interaction.channel.id),
+            message_id=message_id
+        )
+        session.add(req)
+        session.commit()
+        session.refresh(req)
+
+        return user, req, None
 
 
 def process_text_response(session: Session, req: Request, response: str):

@@ -1,10 +1,8 @@
-import os
-
 from nextcord.ext import commands
 import nextcord
 from loguru import logger as log
 from sqlmodel import Session
-
+import humanize
 
 from ai import WorkersAILLMClient
 from db import new_engine
@@ -38,10 +36,10 @@ class QuickChatCog(commands.Cog):
         try:
             async with message.channel.typing():
                 # this returns things. We don't care until we want to start rate limiting
-                _, req, allowed = process_request(self.engine, message,
-                                                  message.content, 'text', 'free')
-                if not allowed:
-                    await message.channel.send("Sorry, you've reached the free limit for today. Please try again tomorrow.", reference=message)
+                _, req, time_remaining = process_request(self.engine, message,
+                                                         message.content, 'text', 'free')
+                if time_remaining is not None:
+                    await message.channel.send(f"Sorry, you've reached the free limit for today. Please try again in {humanize.precisedelta(time_remaining)}", reference=message)
                     return
                 context = []
                 # if the message is a reply, we don't want to respond to it.

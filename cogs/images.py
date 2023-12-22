@@ -9,6 +9,7 @@ import nextcord
 from loguru import logger as log
 from openai import OpenAI
 from sqlmodel import Session
+import humanize
 
 from sdxl import WorkersSDAPIAsync, SDAPIAsync
 from db import new_engine
@@ -51,10 +52,10 @@ class ImageCog(commands.Cog):
                        quality: str | None = nextcord.SlashOption(name="quality", description="Image quality", required=False, choices=[
                                                                   'normal', 'better', 'best', 'uncensored'], default='normal'),
                        negative_prompt: str = nextcord.SlashOption(name="negative_prompt", description="Negative prompt for the image. Only supported on \"best\" and \"uncensored\" qualities.", required=False, default=NEGATIVE_PROMPT)):
-        _, request, allowed = process_request(
+        _, request, time_remaining = process_request(
             self.engine, interaction, prompt, 'image', quality)
-        if not allowed:
-            await interaction.response.send_message("Sorry, you've reached the free limit for today. Please try again tomorrow.", ephemeral=True)
+        if time_remaining is not None:
+            await interaction.response.send_message(f"Sorry, you've reached the free limit for today. Please try again in {humanize.precisedelta(time_remaining)}", ephemeral=True)
             return
         log.info(
             f"Generating {quality} quality image with prompt: {prompt}")
