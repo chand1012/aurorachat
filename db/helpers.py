@@ -25,13 +25,13 @@ PAID_LIMITS = {
 }
 
 # for testing
-FREE_LIMITS = {
-    'text_free': 1,
-    'text': 1,
-    'image': 1,
-    'image_normal': 1,
-    'speak': 1
-}
+# FREE_LIMITS = {
+#     'text_free': 1,
+#     'text': 1,
+#     'image': 1,
+#     'image_normal': 1,
+#     'speak': 1
+# }
 
 
 def handle_rate_limit(requests: List[Request], tier: str) -> bool:
