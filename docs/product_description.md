@@ -16,3 +16,21 @@ Aurora is a Discord bot powered by AI that assists the users of a Discord server
     - Web search is also coming soon to `/chat`.
 * YouTube video summarization by clicking on her reaction to a YouTube link.
 * Custom TTS via `/speak`. 
+
+## Pricing
+
+The core features of Aurora are 100% free. However, users get limited amounts of each features, and some features do require a subscription. The following is a list of features and their limits for free users.
+
+* `/imagine` - 5 images per day for normal, 1 image per day for everything else.
+* `/chat` - 10 messages per day.
+* `/speak` - 3 tts requests per day.
+* Mentioning her - 100 messages per day.
+* YouTube summarization - unlimited.
+
+Pricing is to be determined, but here are the limits for paid users.
+
+* `/imagine` - 60 images per day for normal, 10 images per day for everything else.
+* `/chat` - 400 messages per day.
+* `/speak` - 100 tts requests per day.
+* Mentioning her - 500 messages per day.
+* YouTube summarization - unlimited.
