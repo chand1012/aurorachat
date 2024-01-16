@@ -70,8 +70,11 @@ class MemeGenCog(commands.Cog):
                 resp.raise_for_status()
 
             data = resp.json()
-            if data['status'] != 'PENDING':
+            if data['status'] == 'SUCCESS':
                 image_url = data['result']
+            elif data['status'] == 'FAILURE':
+                raise Exception(
+                    f'Failed to generate meme: CompanyHerd task {task_id} failed')
         # download the image
         resp = await self.client.get(image_url)
         if resp.status_code != 200:
