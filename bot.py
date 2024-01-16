@@ -26,6 +26,7 @@ if __name__ == "__main__":
     bot.load_extension('cogs.ping')
     bot.load_extension('cogs.chat')
     bot.load_extension('cogs.quickchat')
+    bot.load_extension('cogs.memegen')
     bot.load_extension('cogs.images')
     bot.load_extension('cogs.tts')
     bot.load_extension('cogs.summary')

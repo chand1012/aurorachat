@@ -14,7 +14,8 @@ FREE_LIMITS = {
     'text': 10,
     'image': 1,
     'image_normal': 3,
-    'speak': 3
+    'speak': 3,
+    'meme': 3,
 }
 
 PAID_LIMITS = {
@@ -23,6 +24,7 @@ PAID_LIMITS = {
     'image': 10,
     'image_normal': 60,
     'speak': 100,
+    'meme': 100,
 }
 
 # for testing
