@@ -59,6 +59,7 @@ class MemeGenCog(commands.Cog):
             log.error(
                 f"Got status code {resp.status_code} from meme endpoint")
             resp.raise_for_status()
+            await interaction.followup.send_message("Sorry, something went wrong. Please try again. If the issue persists, please wait a few minutes and try again.")
         task_id = resp.json()['task_id']
         image_url = None
         while image_url is None:
@@ -68,6 +69,7 @@ class MemeGenCog(commands.Cog):
                 log.error(
                     f"Got status code {resp.status_code} from meme endpoint")
                 resp.raise_for_status()
+                await interaction.followup.send_message("Sorry, something went wrong. Please try again. If the issue persists, please wait a few minutes and try again.")
 
             data = resp.json()
             if data['status'] == 'SUCCESS':
@@ -80,6 +82,7 @@ class MemeGenCog(commands.Cog):
         if resp.status_code != 200:
             log.error(
                 f"Got status code {resp.status_code} from meme endpoint")
+            await interaction.followup.send_message("Sorry, something went wrong. Please try again. If the issue persists, please wait a few minutes and try again.")
             resp.raise_for_status()
 
         # convert to bytesio
@@ -90,7 +93,7 @@ class MemeGenCog(commands.Cog):
         image_bytes.seek(0)
         # upload to discord
         f = nextcord.File(image_bytes, filename=f"{uuid.uuid4()}.jpg")
-        await interaction.followup.send(content=random.choice(phrases), file=f)
+        await interaction.followup.send(content=random.choice(phrases) + f' Prompt: {prompt}', file=f)
         with Session(self.engine) as session:
             g = GeneratedFiles(
                 req_id=request.id,
@@ -104,7 +107,6 @@ class MemeGenCog(commands.Cog):
     async def _meme_error(self, interaction: nextcord.Interaction, error: commands.CommandError):
         log.error(error)
         await send_error_webhook(str(error), 'meme_gen', interaction.channel_id, interaction.id, interaction.user.id, '')
-        await interaction.followup.send_message("Sorry, something went wrong. Please try again later.")
 
 
 def setup(bot):
