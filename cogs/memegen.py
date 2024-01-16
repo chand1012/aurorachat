@@ -104,7 +104,7 @@ class MemeGenCog(commands.Cog):
     async def _meme_error(self, interaction: nextcord.Interaction, error: commands.CommandError):
         log.error(error)
         await send_error_webhook(str(error), 'meme_gen', interaction.channel_id, interaction.id, interaction.user.id, '')
-        await interaction.response.send_message("Sorry, something went wrong. Please try again later.")
+        await interaction.followup.send_message("Sorry, something went wrong. Please try again later.")
 
 
 def setup(bot):
