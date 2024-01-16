@@ -40,6 +40,11 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: docker.io/chand1012/aurora
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=sha
+            latest
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
