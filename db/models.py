@@ -9,6 +9,7 @@ class User(SQLModel, table=True):
     discord_id: str = Field(default=None, unique=True, nullable=False)
     payment_status: Optional[str] = Field(default=None)
     request: List["Request"] = Relationship(back_populates="user")
+    created_at: datetime = Field(default=datetime.now(), nullable=False)
 
 
 class Request(SQLModel, table=True):
