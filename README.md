@@ -7,7 +7,8 @@ An everything AI for Discord.
 * [Production Join URL](https://discord.com/oauth2/authorize?client_id=1167261104846680195&scope=bot&permissions=395137108992)
 * [Development Join URL](https://discord.com/oauth2/authorize?client_id=1167330015193608202&scope=bot&permissions=395137108992)
 
-## TODO
+## Deployment Configuration
 
-* [x] When a user sends a message with a YouTube link, the bot should add a reaction to it. That message should be watched for 24 hours. If any user also reacts to the same reaction, it will provide the summary of the video. If no one has reacted in 24 hours, the bot should remove the reaction and not provide the summary. The bot should only summarize the video if the user reacts to it.
-* [ ] Restrict so that only the user who created the thread can message in it unless they explicitly allow one (or all) other users. This should be done with another slash command.
+We are going to host Aurora on [Fly](https://fly.io). There will be two instances of Aurora, one for development and one for production. The development one will only be deployed whenever a developer runs `just deploy` on their systems. The production one will automatically deploy from `main`. For development she will be given the minimum spec machine available, and for production she will start with 512MB of RAM and 1 CPU core. If she needs more resources, we will give them to her.
+
+There will also be two separate databases for dev and prod, also hosted on Fly, and with an admin interface. 

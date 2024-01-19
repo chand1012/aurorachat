@@ -1,32 +1,36 @@
-# fly.toml app configuration file generated for aurorachat-dev on 2024-01-18T16:42:44-05:00
+# fly.toml app configuration file generated for pgadmin on 2024-01-19T13:08:25-05:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = "aurorachat-dev"
+app = "pgadmin"
 primary_region = "bos"
 
 [build]
 
 [http_service]
-internal_port = 8080
+internal_port = 80
 force_https = true
 auto_stop_machines = true
 auto_start_machines = true
 min_machines_running = 0
 processes = ["app"]
 
+[[vm]]
+cpu_kind = "shared"
+cpus = 1
+memory_mb = 1024
+
+[mounts]
+source = "pgadmin_data"
+destination = "/pgadmin4/servers.json"
+
 [checks]
 [checks.health]
 grace_period = "60s"
 interval = "15s"
 method = "get"
-path = "/"
-port = 8080
+path = "/misc/ping"
+port = 80
 timeout = "10s"
 type = "http"
-
-[[vm]]
-cpu_kind = "shared"
-cpus = 1
-memory_mb = 256
