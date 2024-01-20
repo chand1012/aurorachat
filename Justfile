@@ -15,3 +15,6 @@ proxy:
 
 proxy-prod:
     fly proxy 5432:5432 -a aurora-prod-db
+
+bulk-upload directory namespace:
+    poetry run python3 bulk_upload.py {{directory}} {{namespace}}

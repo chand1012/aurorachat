@@ -43,6 +43,8 @@ class Overrides(SQLModel, table=True):
     payment_status: Optional[str] = Field(default=None)
     assistant_id: Optional[str] = Field(default=None, nullable=True)
     intro_message: Optional[str] = Field(default=None, nullable=True)
+    athena_namespace: Optional[str] = Field(default=None, nullable=True)
+    quickchat_system_prompt: Optional[str] = Field(default=None, nullable=True)
 
 
 class Thread(SQLModel, table=True):
