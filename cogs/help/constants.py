@@ -33,6 +33,7 @@ long_descriptions = {
     'close': '''Close the thread you're in with me. Does not delete the thread, and does nothing if you're not in a thread with me.''',
     'delete': '''Delete the thread you're in with me. Does nothing if you're not in a thread with me.''',
     'imagine': '''Have me draw for you! Prompt is required, quality is optional. Quality can be one of `normal`, `best`, or `uncensored`. Default is `normal`.''',
+    'meme': '''Have me make a meme for you! Prompt is required.''',
     'speak': '''Have me read text to you! Prompt is required. Default speed is 0.9.''',
     'ping': '''Pong!''',
 }

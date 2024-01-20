@@ -10,7 +10,7 @@ import humanize
 
 from utils import truncate_string, process_audio
 from db import new_engine
-from db.models import Thread
+from db.models import Thread, Overrides
 from db.helpers import process_request, process_text_response
 from utils.upload import process_upload, process_audio, AUDIO_FILE_EXT
 from cogs.chat.process_thread import process_thread
@@ -104,6 +104,26 @@ class ChatCog(commands.Cog):
         await ctx.response.defer(ephemeral=False)
         # eventually there will be more assistants with differing quality
         assistant = os.getenv('ASSISTANT_ID')
+        intro_message = "Hello! I'm Aurora, your helpful assistant. How can I help you today?"
+        # query the server to see if there is a channel or server override
+        # if so, use that assistant instead
+        with Session(self.engine) as session:
+            statement = select(Overrides).where(Overrides.channel_id == str(
+                ctx.channel.id)).where(Overrides.assistant_id != None)
+            override = session.exec(statement).first()
+            if override is not None:
+                assistant = override.assistant_id
+                if override.intro_message is not None:
+                    intro_message = override.intro_message
+            else:
+                statement = select(Overrides).where(Overrides.guild_id == str(
+                    ctx.guild.id)).where(Overrides.assistant_id != None)
+                override = session.exec(statement).first()
+                if override is not None:
+                    assistant = override.assistant_id
+                    if override.intro_message is not None:
+                        intro_message = override.intro_message
+
         log.info(
             f"Creating new thread with assistant ({assistant}) for on {ctx.guild.name} ({ctx.guild.id})")
         # process the request
@@ -129,7 +149,7 @@ class ChatCog(commands.Cog):
             session.commit()
             session.refresh(db_thread)
             await ctx.followup.send(f"Created thread {thread_channel.mention}")
-            await thread_channel.send("Hello! I'm Aurora, your helpful assistant. How can I help you today?")
+            await thread_channel.send(intro_message)
 
     @_chat.error
     async def _chat_error(self, ctx: nextcord.Interaction, error: commands.CommandError):
