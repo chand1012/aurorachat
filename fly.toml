@@ -3,7 +3,7 @@
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = "aurorachat"
+app = "aurora-prod"
 primary_region = "bos"
 
 [build]
@@ -18,8 +18,8 @@ processes = ["app"]
 
 [checks]
 [checks.health]
-grace_period = "60s"
-interval = "15s"
+grace_period = "120s"
+interval = "120s"
 method = "get"
 path = "/"
 port = 8080

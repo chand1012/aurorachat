@@ -1,17 +1,17 @@
 dev:
-    poetry run python3 bot.py
+    overmind start
 
 build:
     docker build . -t chand1012/aurora
 
 deploy:
-    fly deploy --app aurorachat-dev
+    fly deploy --app aurora-dev
 
 deploy-prod:
-    fly deploy --app aurorachat
+    fly deploy --app aurora-prod
 
 proxy:
     fly proxy 5432:5432 -a aurora-dev-db
 
 proxy-prod:
-    fly proxy 5432:5432 -a aurora-db
+    fly proxy 5432:5432 -a aurora-prod-db
