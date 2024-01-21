@@ -37,3 +37,5 @@ long_descriptions = {
     'speak': '''Have me read text to you! Prompt is required. Default speed is 0.9.''',
     'ping': '''Pong!''',
 }
+
+support_server_link = 'https://discord.gg/PnNZ7KqhH6'
