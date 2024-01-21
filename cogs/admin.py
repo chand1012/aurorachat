@@ -51,6 +51,12 @@ class AdminCog(commands.Cog):
             session.commit()
             await interaction.followup.send(f'Successfully set the quickchat prompt to "{prompt}".')
 
+    @set_quickchat_prompt.error
+    async def set_quickchat_prompt_error(self, interaction: nextcord.Interaction, error: commands.CommandError):
+        await interaction.followup.send('Sorry! There was an error setting the quickchat prompt. If this issue persists please contact support. See `/support` for more information.')
+        send_error_webhook('Error setting quickchat prompt!', 'set_quickchat_prompt', str(interaction.channel_id), str(
+            interaction.message.id), str(interaction.user.id), f'Error: {error}')
+
     @nextcord.slash_command(name="get_quickchat_prompt", description="Get the system prompt for quickchat.")
     async def get_quickchat_prompt(self, interaction: nextcord.Interaction):
         await interaction.response.defer()
@@ -68,6 +74,12 @@ class AdminCog(commands.Cog):
                     await interaction.followup.send(f'The current quickchat prompt is "{result.quickchat_system_prompt}".')
                     return
             await interaction.followup.send('There is no current quickchat prompt.')
+
+    @get_quickchat_prompt.error
+    async def get_quickchat_prompt_error(self, interaction: nextcord.Interaction, error: commands.CommandError):
+        await interaction.followup.send('Sorry! There was an error getting the quickchat prompt. If this issue persists please contact support. See `/support` for more information.')
+        send_error_webhook('Error getting quickchat prompt!', 'get_quickchat_prompt', str(interaction.channel_id), str(
+            interaction.message.id), str(interaction.user.id), f'Error: {error}')
 
     #  Currently only supports plain text documents (.txt), Markdown (.md), PDFs (.pdf), HTML Web Pages (.html), and Word (.docx) documents. Plain text, HTML Web Pages, and Markdown must be UTF-8 encoded.
     @nextcord.slash_command(name="add_docs_quickchat", description="Give Aurora some information to search for when using quickchat.")
@@ -129,6 +141,12 @@ class AdminCog(commands.Cog):
             session.add(Overrides(
                 guild_id=str(interaction.guild.id), athena_namespace=namespace))
             session.commit()
+    
+    @add_docs_quickchat.error
+    async def add_docs_quickchat_error(self, interaction: nextcord.Interaction, error: commands.CommandError):
+        await interaction.followup.send('Sorry! There was an error adding the document to the quickchat database. If this issue persists please contact support. See `/support` for more information.')
+        send_error_webhook('Error adding document to quickchat database!', 'add_docs_quickchat', str(interaction.channel_id), str(
+            interaction.message.id), str(interaction.user.id), f'Error: {error}')
 
 
 def setup(bot: commands.Bot):
