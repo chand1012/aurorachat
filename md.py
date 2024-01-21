@@ -2,20 +2,17 @@ import os
 import sys
 from pathlib import Path
 
-from athenadb import AthenaDBSync
 from utils.upload import process_pdf, process_docx
 from utils.strings import split_text_into_chunks
 
 # if the user didn't provide a directory, exit
 if len(sys.argv) < 3:
-    print("Usage: python bulk_upload_quickchat.py <directory> <namespace>")
+    print("Usage: python md.py <directory> <output_filename.md>")
     sys.exit(1)
 
 # get the directory from the command line
 directory = sys.argv[1]
-athena_namespace = sys.argv[2]
-
-athena = AthenaDBSync(os.getenv('ATHENA_DB'))
+output_filename = sys.argv[2]
 
 content_chunks: list[str] = []
 
@@ -42,14 +39,7 @@ for root, dirs, files in os.walk(directory):
         if content:
             content_chunks.extend(split_text_into_chunks(content))
 
+content = '\n\n'.join(content_chunks)
 
-# upload the chunks to athena
-for i, chunk in enumerate(content_chunks):
-    if i < 52:
-        continue
-    print(
-        f'Uploading chunk {i+1}/{len(content_chunks)} with length {len(chunk)}')
-    try:
-        athena.insert(input=chunk, namespace=athena_namespace)
-    except Exception as e:
-        print(f'Error uploading chunk {i+1}: {e}')
+with open(output_filename, 'w') as f:
+    f.write(content)

@@ -43,7 +43,7 @@ class QuickChatCog(commands.Cog):
                 if time_remaining is not None:
                     await message.channel.send(f"Sorry, you've reached the free limit for today. Please try again in {humanize.precisedelta(time_remaining, minimum_unit='minutes')}", reference=message)
                     return
-                system_prompt = 'You are a helpful Discord assistant named Aurora. You will always be polite and helpful.'
+                system_prompt = 'You are a helpful Discord assistant named Aurora. You will always be polite and helpful. Use any given information above to help answer the user\'s question.'
                 athena_namespace = None
                 # check if an override exists
                 with Session(self.engine) as session:
@@ -105,8 +105,8 @@ class QuickChatCog(commands.Cog):
                     vectors = resp.get('vectors')
                     if vectors:
                         information = '\n'.join(v['text'] for v in vectors)
-                        prompt = f'Given Information: {information}\n\n{prompt}'
-
+                        p = context[0]['content']
+                        context[0]['content'] = f'{information}\n\n{p}'
                 context.append({
                     'content': prompt,
                     'role': 'user'

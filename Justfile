@@ -18,3 +18,6 @@ proxy-prod:
 
 bulk-upload directory namespace:
     poetry run python3 bulk_upload.py {{directory}} {{namespace}}
+
+md directory output:
+    poetry run python3 md.py {{directory}} {{output}}
