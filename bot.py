@@ -22,8 +22,10 @@ async def on_ready():
 
 # Make sure this is the main file being run, not a module being imported
 if __name__ == "__main__":
+    log.info("Loading cogs, this may take up to a minute...")
     bot.load_extension('cogs.help')
     bot.load_extension('cogs.ping')
+    bot.load_extension('cogs.admin')
     bot.load_extension('cogs.chat')
     bot.load_extension('cogs.quickchat')
     bot.load_extension('cogs.memegen')

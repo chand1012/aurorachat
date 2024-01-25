@@ -10,6 +10,9 @@ load_dotenv()
 DB_URI = os.getenv("DATABASE_URL", "sqlite:///./sam.db")
 DB_ECHO = os.getenv("DB_ECHO") == "true"
 
+if DB_URI.startswith('postgres://'):
+    # replace with postgresql://
+    DB_URI = DB_URI.replace('postgres://', 'postgresql://', 1)
 
 def new_engine(uri=DB_URI, echo=DB_ECHO):
     engine = create_engine(uri, echo=echo)

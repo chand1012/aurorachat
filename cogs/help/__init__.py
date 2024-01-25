@@ -3,7 +3,7 @@ import nextcord
 from nextcord.ext import commands
 from loguru import logger as log
 
-from cogs.help.constants import long_descriptions
+from cogs.help.constants import long_descriptions, support_server_link
 from utils import random_color_in_gradient, hex_to_int
 
 
@@ -35,6 +35,20 @@ class HelpCog(commands.Cog):
             embed = nextcord.Embed(
                 title=f"Help - /{command}", description=long_desc, color=color)
             await interaction.response.send_message(embed=embed)
+
+    @nextcord.slash_command(name="support", description="Display support contact information.")
+    async def support(self, interaction: nextcord.Interaction):
+        """Support command for slash commands"""
+        color = hex_to_int(random_color_in_gradient('#211171', '#00FDC3'))
+
+        embed = nextcord.Embed(title="Support - Aurora",
+                               description="Need help? Contact us!", color=color)
+        embed.add_field(name="Support Server",
+                        value=f"[Click here]({support_server_link})")
+        # embed.add_field(name="Email", value="aurora@timesurgelabs.com")
+        embed.add_field(
+            name="Website", value="https://aurora.timesurgelabs.com")
+        await interaction.response.send_message(embed=embed)
 
 
 def setup(bot):

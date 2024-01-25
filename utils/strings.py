@@ -1,3 +1,6 @@
+import re
+
+
 def split_messages(content, max_len=2000):
     split = content.split("\n")
     responses = []
@@ -34,3 +37,20 @@ def split_string_on_space(s: str, n: int) -> list[str]:
         result.append(current_line.strip())
 
     return result
+
+
+def split_text_into_chunks(text, max_length=1024) -> list[str]:
+    """
+    Splits the text into chunks of up to max_length characters.
+    Each chunk ends with a period and is as close to max_length characters as possible.
+    """
+    pattern = r'.{1,' + str(max_length) + r'}(?<=\.)\s'
+    chunks = re.findall(pattern, text, flags=re.DOTALL)
+
+    # Handling the case where the last chunk might not end with a period
+    if text.endswith('.') and text not in chunks[-1]:
+        # Append the last incomplete chunk to the second last chunk
+        chunks[-2] += chunks[-1]
+        del chunks[-1]
+
+    return [chunk.strip() for chunk in chunks]

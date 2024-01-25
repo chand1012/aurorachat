@@ -194,3 +194,6 @@ pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,python
 sam.db
+.env.old
+secrets.txt
+gogopool.md

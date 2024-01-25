@@ -9,6 +9,7 @@ class User(SQLModel, table=True):
     discord_id: str = Field(default=None, unique=True, nullable=False)
     payment_status: Optional[str] = Field(default=None)
     request: List["Request"] = Relationship(back_populates="user")
+    created_at: datetime = Field(default=datetime.now(), nullable=False)
 
 
 class Request(SQLModel, table=True):
@@ -33,11 +34,17 @@ class Request(SQLModel, table=True):
     textresponse: List["TextResponse"] = Relationship(back_populates="request")
 
 
-class ServerOverrides(SQLModel, table=True):
+class Overrides(SQLModel, table=True):
     '''Used to allow certain servers to ignore rate limits. Eventually this will be replaced with a more robust system. For now if they're in the table, they can ignore rate limits.'''
     id: Optional[int] = Field(default=None, primary_key=True)
-    guild_id: str = Field(default=None, unique=True, nullable=False)
+    guild_id: Optional[str] = Field(default=None, unique=True, nullable=True)
+    # optional, overrides guild_id if both are present
+    channel_id: Optional[str] = Field(default=None, nullable=True)
     payment_status: Optional[str] = Field(default=None)
+    assistant_id: Optional[str] = Field(default=None, nullable=True)
+    intro_message: Optional[str] = Field(default=None, nullable=True)
+    athena_namespace: Optional[str] = Field(default=None, nullable=True)
+    quickchat_system_prompt: Optional[str] = Field(default=None, nullable=True)
 
 
 class Thread(SQLModel, table=True):

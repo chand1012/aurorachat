@@ -2,11 +2,13 @@ from datetime import datetime, timedelta
 from typing import List
 
 import nextcord
-from sqlmodel import Session, select
+from sqlmodel import Session, select, or_
 from sqlalchemy.engine.base import Engine
 from loguru import logger as log
 
-from db.models import Request, User, TextResponse, ServerOverrides
+from db.models import Request, User, TextResponse, Overrides
+
+DISABLE_RATE_LIMITS = True
 
 # both every 24 hours
 FREE_LIMITS = {
@@ -38,6 +40,9 @@ PAID_LIMITS = {
 
 
 def handle_rate_limit(requests: List[Request], tier: str, item: str) -> bool:
+    if DISABLE_RATE_LIMITS:
+        return False
+
     request_dict = {
         'text_free': 0,
         'text': 0,
@@ -57,6 +62,8 @@ def handle_rate_limit(requests: List[Request], tier: str, item: str) -> bool:
             request_dict['image_normal'] += 1
         elif request.req_type == 'speak':
             request_dict['speak'] += 1
+        elif request.req_type == 'meme':
+            request_dict['meme'] += 1
 
     limits = FREE_LIMITS if tier == 'free' else PAID_LIMITS
 
@@ -96,8 +103,8 @@ def process_request(engine: Engine, interaction: nextcord.Interaction | nextcord
             user = session.exec(statement).first()
 
         # check if we're on a server with a server override
-        statement = select(ServerOverrides).where(
-            ServerOverrides.guild_id == str(interaction.guild.id))
+        statement = select(Overrides).where(or_(Overrides.guild_id == str(
+            interaction.guild.id), Overrides.channel_id == str(interaction.channel.id))).where(Overrides.payment_status != None)
         server_override = session.exec(statement).first()
         if server_override:
             # if we are, we can ignore rate limits
