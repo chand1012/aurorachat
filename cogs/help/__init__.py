@@ -45,8 +45,9 @@ class HelpCog(commands.Cog):
                                description="Need help? Contact us!", color=color)
         embed.add_field(name="Support Server",
                         value=f"[Click here]({support_server_link})")
-        embed.add_field(name="Email", value="aurora@timesurgelabs.com")
-        embed.add_field(name="Website", value="https://aurora.timesurgelabs.com")
+        # embed.add_field(name="Email", value="aurora@timesurgelabs.com")
+        embed.add_field(
+            name="Website", value="https://aurora.timesurgelabs.com")
         await interaction.response.send_message(embed=embed)
 
 

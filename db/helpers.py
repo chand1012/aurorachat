@@ -8,6 +8,8 @@ from loguru import logger as log
 
 from db.models import Request, User, TextResponse, Overrides
 
+DISABLE_RATE_LIMITS = True
+
 # both every 24 hours
 FREE_LIMITS = {
     'text_free': 100,
@@ -38,6 +40,9 @@ PAID_LIMITS = {
 
 
 def handle_rate_limit(requests: List[Request], tier: str, item: str) -> bool:
+    if DISABLE_RATE_LIMITS:
+        return False
+
     request_dict = {
         'text_free': 0,
         'text': 0,
