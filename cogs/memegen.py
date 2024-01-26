@@ -39,7 +39,7 @@ class MemeGenCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.url = os.getenv('COMPANYHERD_URL')
-        self.client = AsyncClient(base_url=self.url)
+        self.client = AsyncClient(base_url=self.url, verify=False)
         self.engine = new_engine()
         log.info("Loaded MemeGenCog")
 
