@@ -52,6 +52,7 @@ class ImageCog(commands.Cog):
                        quality: str | None = nextcord.SlashOption(name="quality", description="Image quality", required=False, choices=[
                                                                   'normal', 'better', 'best', 'uncensored'], default='normal'),
                        negative_prompt: str = nextcord.SlashOption(name="negative_prompt", description="Negative prompt for the image. Only supported on \"best\" and \"uncensored\" qualities.", required=False, default=NEGATIVE_PROMPT)):
+        self.engine = new_engine()
         _, request, time_remaining = process_request(
             self.engine, interaction, prompt, 'image', quality)
         if time_remaining is not None:

@@ -39,6 +39,7 @@ class FeedbackCog(commands.Cog):
         if last_message is None:
             await interaction.response.send_message("I don't think I've said anything yet.", ephemeral=True)
             return
+        self.engine = new_engine()
         success = process_feedback(
             interaction, last_message, Session(self.engine), "goodbot", 1)
         if success is None:
@@ -63,6 +64,7 @@ class FeedbackCog(commands.Cog):
         if last_message is None:
             await interaction.response.send_message("I don't think I've said anything yet.", ephemeral=True)
             return
+        self.engine = new_engine()
         success = process_feedback(
             interaction, last_message, Session(self.engine), "badbot", -1)
         if success is None:
@@ -97,6 +99,7 @@ class FeedbackCog(commands.Cog):
                 await interaction.response.send_message("I don't think I've said anything yet.", ephemeral=True)
                 return
             message = last_message
+        self.engine = new_engine()
         success = process_feedback(
             interaction, message, Session(self.engine), feedback, rating)
         if success is None:
@@ -128,6 +131,7 @@ class FeedbackCog(commands.Cog):
             return
         original_message = message.reference.resolved
         # if its thumbs up, handle it the same way as goodbot
+        self.engine = new_engine()
         if payload.emoji.name == '👍':
             success = process_feedback(
                 None, original_message, Session(self.engine), "thumbs up", 1)
@@ -176,6 +180,7 @@ class FeedbackCog(commands.Cog):
                     if not other_original_message.interaction.type == nextcord.InteractionType.application_command:
                         return
 
+                self.engine = new_engine()
                 feedback = message.content
                 success = process_feedback(
                     None, original_message, Session(self.engine), feedback)

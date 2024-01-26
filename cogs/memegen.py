@@ -45,14 +45,15 @@ class MemeGenCog(commands.Cog):
 
     @nextcord.slash_command(name="meme", description="Have Aurora make a meme for you!")
     async def _meme(self, interaction: nextcord.Interaction, prompt: str = nextcord.SlashOption(name="prompt", description="Prompt for the meme", required=True)):
+        await interaction.response.defer()
+        self.engine = new_engine()
         _, request, time_remaining = process_request(
             self.engine, interaction, prompt, 'meme', 'meme')
         if time_remaining is not None:
-            await interaction.response.send_message(f"Sorry, you've reached the free limit for today. Please try again in {humanize.precisedelta(time_remaining)}", ephemeral=True)
+            await interaction.followup.send(f"Sorry, you've reached the free limit for today. Please try again in {humanize.precisedelta(time_remaining)}", ephemeral=True)
             return
         log.info(
             f"User {interaction.user.id} requested a meme with prompt {prompt}")
-        await interaction.response.defer()
         # make a request to /meme with the prompt in the query string as "topic"
         resp = await self.client.get("/meme", params={"topic": prompt})
         if resp.status_code != 200:

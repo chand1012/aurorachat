@@ -36,6 +36,7 @@ class CleanerCog(commands.Cog):
         async with self.lock:
             try:
                 log.info("Running cleaner")
+                self.engine = new_engine()
                 with Session(self.engine) as session:
                     # get all requests in the last 24 hours that have a thread
                     requests = session.exec(select(Request).where(

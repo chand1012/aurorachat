@@ -33,6 +33,7 @@ class ChatCog(commands.Cog):
             # check if the bot is the one who started the thread
             if message.channel.owner != self.bot.user:
                 return
+            self.engine = new_engine()
             log.info(
                 f'Received message in thread on {message.guild.name} ({message.guild.id})')
             async with message.channel.typing():
@@ -103,6 +104,7 @@ class ChatCog(commands.Cog):
         # quality: str | None = nextcord.SlashOption(name="quality", description="Quality of conversation", choices=['normal', 'better', 'best'], required=False, default='normal)
         await ctx.response.defer(ephemeral=False)
         # eventually there will be more assistants with differing quality
+        self.engine = new_engine()
         assistant = os.getenv('ASSISTANT_ID')
         intro_message = "Hello! I'm Aurora, your helpful assistant. How can I help you today?"
         # query the server to see if there is a channel or server override
@@ -167,6 +169,7 @@ class ChatCog(commands.Cog):
             if ctx.channel.owner != self.bot.user:
                 return
             await ctx.response.defer(ephemeral=False)
+            self.engine = new_engine()
             # get the current thread from the database
             with Session(self.engine) as session:
                 statement = select(Thread).where(
@@ -197,6 +200,7 @@ class ChatCog(commands.Cog):
             if ctx.channel.owner != self.bot.user:
                 return
             await ctx.response.defer(ephemeral=False)
+            self.engine = new_engine()
             with Session(self.engine) as session:
                 statement = select(Thread).where(
                     Thread.discord_id == str(ctx.channel.id))
@@ -234,6 +238,7 @@ class ChatCog(commands.Cog):
         if ctx.channel.type == nextcord.ChannelType.public_thread or ctx.channel.type == nextcord.ChannelType.private_thread:
             if ctx.channel.owner != self.bot.user:
                 return
+            self.engine = new_engine()
             with Session(self.engine) as session:
                 statement = select(Thread).where(
                     Thread.discord_id == str(ctx.channel.id))

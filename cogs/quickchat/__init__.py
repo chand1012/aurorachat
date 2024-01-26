@@ -37,6 +37,7 @@ class QuickChatCog(commands.Cog):
 
         try:
             async with message.channel.typing():
+                self.engine = new_engine()
                 # this returns things. We don't care until we want to start rate limiting
                 _, req, time_remaining = process_request(self.engine, message,
                                                          message.content, 'text', 'free')

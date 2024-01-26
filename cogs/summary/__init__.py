@@ -39,6 +39,7 @@ class SummaryCog(commands.Cog):
         if not videoId:
             return
 
+        self.engine = new_engine()
         _, request, _ = process_request(
             self.engine, message, message.content, 'summary', 'normal')
         async with message.channel.typing():
@@ -60,6 +61,7 @@ class SummaryCog(commands.Cog):
             return
         if payload.emoji.name not in used_emojis:
             return
+        self.engine = new_engine()
         if payload.emoji.name == '📖':
             channel = self.bot.get_channel(payload.channel_id)
             async with channel.typing():

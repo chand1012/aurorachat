@@ -35,6 +35,7 @@ class AdminCog(commands.Cog):
         if len(prompt) > 2000:
             await interaction.followup.send("Sorry, that prompt is too long. Please keep it under 2000 characters.")
             return
+        self.engine = new_engine()
         with Session(self.engine) as session:
             # if there's already a prompt, update it
             statement = select(Overrides).where(
@@ -64,6 +65,7 @@ class AdminCog(commands.Cog):
         if not interaction.user.guild_permissions.administrator:
             await interaction.followup.send("Sorry, you must be a server administrator to use this command.")
             return
+        self.engine = new_engine()
         with Session(self.engine) as session:
             # if there's already a prompt, update it
             statement = select(Overrides).where(
@@ -126,6 +128,7 @@ class AdminCog(commands.Cog):
         namespace = f'server.{interaction.guild.id}.quickchat'
         await self.athena.insert(inputs=chunks, namespace=namespace)
         await interaction.followup.send(f"Successfully added {doc.filename} to the quickchat database.")
+        self.engine = new_engine()
         with Session(self.engine) as session:
             # check if an override with this namespace already exists
             statement = select(Overrides).where(
@@ -141,7 +144,7 @@ class AdminCog(commands.Cog):
             session.add(Overrides(
                 guild_id=str(interaction.guild.id), athena_namespace=namespace))
             session.commit()
-    
+
     @add_docs_quickchat.error
     async def add_docs_quickchat_error(self, interaction: nextcord.Interaction, error: commands.CommandError):
         await interaction.followup.send('Sorry! There was an error adding the document to the quickchat database. If this issue persists please contact support. See `/support` for more information.')
