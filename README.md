@@ -19,3 +19,5 @@ There will also be two separate databases for dev and prod, also hosted on Fly, 
 * [Top.gg](https://top.gg/bot/1167261104846680195)
 * [Botlist.me](https://botlist.me/bots/1167261104846680195)
 * [discord.bots.gg](https://discord.bots.gg/bots/1167261104846680195)
+
+## TODO
