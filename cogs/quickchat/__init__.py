@@ -122,8 +122,16 @@ class QuickChatCog(commands.Cog):
                     process_text_response(session, req, text)
                 log.info(
                     f'QuickChat response to {message.author} on {message.channel.id}: {text}')
-                # for now just echo the prompt back and print to the console
-                await message.channel.send(text, reference=message)
+
+                if len(text) > 2000:
+                    # chunk the message
+                    chunks = [text[i:i+2000]
+                              for i in range(0, len(text), 2000)]
+                    for chunk in chunks:
+                        await message.channel.send(chunk, reference=message)
+                else:
+                    # for now just echo the prompt back and print to the console
+                    await message.channel.send(text, reference=message)
         except Exception as e:
             log.error(e)
             # await send_error_webhook(str(e), str(message.channel.id), str(message.id), str(message.author.id), str(message.content))
