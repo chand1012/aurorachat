@@ -159,7 +159,10 @@ class ChatCog(commands.Cog):
         try:
             await ctx.followup.send(f"Error starting chat: {error}", ephemeral=True)
         except:
-            await ctx.send(f"Error starting chat: {error}", ephemeral=True)
+            if "missing access" in str(error).lower():
+                await ctx.send(f"Sorry, I don't have permission to create a thread in this channel. Please ask an admin to enable threads for me.", ephemeral=True)
+            else:
+                await ctx.send(f"Error starting chat: {error}", ephemeral=True)
             await send_error_webhook(str(error), 'chat', str(ctx.channel.id), str(ctx.message.id),
                                      str(ctx.author.id), str(ctx.message.content))
 
