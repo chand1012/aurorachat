@@ -31,10 +31,6 @@ class QuickChatCog(commands.Cog):
         if not message.mentions or message.mentions[0] != self.bot.user:
             return
 
-        # the message has to be in a regular channel. Not a DM, not a thread, not a group DM
-        if not isinstance(message.channel, nextcord.TextChannel):
-            return
-
         try:
             async with message.channel.typing():
                 self.engine = new_engine()
@@ -70,7 +66,7 @@ class QuickChatCog(commands.Cog):
                 # we should just ignore it so that the feedback loop doesn't happen
                 if message.reference:
                     reference = message.reference
-                    while reference and len(context) < 6:
+                    while reference and len(context) < 10:
                         current_message = await message.channel.fetch_message(reference.message_id)
                         if not current_message:
                             return
@@ -89,11 +85,6 @@ class QuickChatCog(commands.Cog):
                             break
                 log.info(
                     f'QuickChat from {message.author} on {message.channel.id}: {message.content}')
-                if len(context) > 6:
-                    log.warning(
-                        f'User {message.author} has a long message thread.')
-                    await message.channel.send("This conversation is getting a bit long, so I'm going to stop here. If you want to have longer conversations with me, please use the `/chat` command.", reference=message)
-                    return
                 prompt = message.content
                 # remove the mention from the prompt
                 prompt = prompt.replace(f'<@{self.bot.user.id}>', '')
@@ -115,7 +106,7 @@ class QuickChatCog(commands.Cog):
 
                 response = self.openai.chat.completions.create(
                     messages=context,
-                    model='gpt-3.5-turbo' if athena_namespace is None else 'gpt-3.5-turbo-16k',
+                    model='gpt-4o-mini',
                 )
                 text = response.choices[0].message.content
                 with Session(self.engine) as session:

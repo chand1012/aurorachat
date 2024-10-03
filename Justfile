@@ -21,3 +21,7 @@ bulk-upload directory namespace:
 
 md directory output:
     poetry run python3 md.py {{directory}} {{output}}
+
+# delete all pycache files
+clean:
+    find . -name "*.pyc" -exec rm -f {} \;

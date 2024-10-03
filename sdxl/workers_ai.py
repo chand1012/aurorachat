@@ -1,5 +1,7 @@
 import io
 import os
+import asyncio
+import base64
 
 from loguru import logger as log
 import httpx
@@ -24,20 +26,22 @@ class WorkersSDAPIAsync:
             log.warning(
                 f"Greater than 20 inference steps is not supported. Setting to 20.")
             num_inference_steps = 20
-        if negative_prompt != '':
-            log.warning(
-                'Negative prompt is currently not supported and will be ignored.')
         if guidance_scale != 7.5:
             log.warning(
                 'Guidance scale is currently not supported and will be ignored.')
-        if width != 1024 or height != 1024:
+        if width > 2048 or height >= 2048:
             log.warning(
-                'Width and height are currently not supported and will be ignored.')
+                'Width and height greater than 2048 are not supported. Setting to 1024.')
+            width = 2048
+            height = 2048
 
         payload = {
             'prompt': prompt,
             'num_steps': num_inference_steps
         }
+
+        if negative_prompt:
+            payload['negative_prompt'] = negative_prompt
 
         headers = {
             'Content-Type': 'application/json',
@@ -50,7 +54,25 @@ class WorkersSDAPIAsync:
             log.error(f"Error generating image: {response.text}")
             raise Exception(f"Error generating image: {response.text}")
 
+        # if flux is in the model name, the response is base 64 encoded and needs to be decoded
+        if 'flux' in self.base_url:
+            image = io.BytesIO(base64.b64decode(response.json()['result']['image']))
+            image.seek(0)
+            return image
+
         # this returns a png
         image = io.BytesIO(response.content)
         image.seek(0)
         return image
+    
+async def testing():
+    from dotenv import load_dotenv
+    load_dotenv()
+    workers = WorkersSDAPIAsync(model_name='@cf/bytedance/stable-diffusion-xl-lightning')
+    image = await workers.generate_image("A cat in a field of flowers.", num_inference_steps=4)
+    with open("cat.png", "wb") as f:
+        f.write(image.read())
+
+
+if __name__=="__main__":
+    asyncio.run(testing())

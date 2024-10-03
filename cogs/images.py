@@ -11,7 +11,7 @@ from openai import OpenAI
 from sqlmodel import Session
 import humanize
 
-from sdxl import WorkersSDAPIAsync, SDAPIAsync
+from sdxl import WorkersSDAPIAsync
 from db import new_engine
 from db.models import GeneratedFiles
 from db.helpers import process_request
@@ -43,8 +43,8 @@ class ImageCog(commands.Cog):
         self.bot = bot
         self.openai = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
         self.engine = new_engine()
-        self.sdxl_modal = SDAPIAsync(base_url=os.getenv("SD_API_URL"))
-        self.sdxl = WorkersSDAPIAsync()
+        self.sdxl_modal = WorkersSDAPIAsync(model_name='@cf/black-forest-labs/flux-1-schnell')
+        self.sdxl = WorkersSDAPIAsync(model_name='@cf/bytedance/stable-diffusion-xl-lightning')
         log.info("Loaded ImageCog")
 
     @nextcord.slash_command(name="imagine", description="Have Aurora draw for you!")
@@ -102,12 +102,13 @@ class ImageCog(commands.Cog):
                     raise Exception(
                         'content_policy_violation: failed moderation')
 
-            if 'best' or 'uncensored' in quality:
+            if 'best' in quality or 'uncensored' in quality:
                 sdxl = self.sdxl_modal
-            image = await sdxl.generate_image(prompt=prompt, negative_prompt=negative_prompt)
+            steps = 4 if quality == 'normal' else 8
+            image = await sdxl.generate_image(prompt=prompt, negative_prompt=negative_prompt, num_inference_steps=steps)
             size = image.getbuffer().nbytes
             image.seek(0)
-            await interaction.followup.send(content=random.choice(phrases), file=nextcord.File(image, filename=f"{uuid.uuid4()}.jpg"))
+            await interaction.followup.send(content=random.choice(phrases), file=nextcord.File(image, filename=f"{uuid.uuid4()}.png"))
         with Session(self.engine) as session:
             f = GeneratedFiles(
                 req_id=request.id,
