@@ -31,7 +31,7 @@ if __name__ == "__main__":
     bot.load_extension('cogs.memegen')
     bot.load_extension('cogs.images')
     bot.load_extension('cogs.tts')
-    bot.load_extension('cogs.summary')
+    # bot.load_extension('cogs.summary')
     bot.load_extension('cogs.cleaner')
     bot.load_extension('cogs.feedback')
     bot.run(BOT_TOKEN)
